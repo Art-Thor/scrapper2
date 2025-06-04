@@ -1,0 +1,142 @@
+{
+    "difficulty_mapping": {
+        "Easy": ["easy", "beginner", "simple", "basic", "novice", "for children", "for_children", "kids"],
+        "Normal": ["normal", "medium", "average", "intermediate", "moderate", "general"],
+        "Hard": ["hard", "difficult", "challenging", "expert", "advanced", "tough", "hardcore"]
+    },
+    "domain_mapping": {
+        "Nature": [
+            "nature", "animals", "wildlife", "environment", "biology", "ecology", 
+            "animal trivia", "creature trivia"
+        ],
+        "Science": [
+            "science", "physics", "chemistry", "astronomy", "space", "technology", 
+            "computers", "mathematics", "math", "sci", "tech", "science trivia",
+            "medical", "health", "engineering", "scientific trivia"
+        ],
+        "Geography": [
+            "geography", "countries", "world", "travel", "places", "cities", "capitals", 
+            "maps", "geography trivia", "world trivia", "travel trivia", "global trivia"
+        ],
+        "Culture": [
+            "culture", "literature", "books", "art", "music", "movies", "television", 
+            "celebrities", "entertainment", "humanities", "people", "tv", "film", 
+            "general", "videogames", "video_games", "video games", "gaming",
+            "tv trivia", "movie trivia", "music trivia", "entertainment trivia",
+            "celebrity trivia", "literature trivia", "book trivia", "art trivia",
+            "general trivia", "pop culture", "cultural trivia", "mixed"
+        ],
+        "Sports": [
+            "sports", "football", "basketball", "baseball", "soccer", "olympics", 
+            "athletics", "games", "competition", "sports trivia", "athletic trivia"
+        ],
+        "History": [
+            "history", "historical", "wars", "ancient", "medieval", "modern", 
+            "world war", "politics", "government", "history trivia", "historical trivia",
+            "political trivia", "war trivia"
+        ],
+        "Religion": [
+            "religion", "christianity", "islam", "judaism", "buddhism", "hinduism",
+            "biblical", "spiritual", "faith", "religious trivia", "bible trivia"
+        ],
+        "Education": [
+            "education", "learning", "academic", "school", "university", "college", 
+            "brain teasers", "educational trivia", "academic trivia", "brainteasers",
+            "brain_teasers"
+        ]
+    },
+    "topic_mapping": {
+        "General": [
+            "general", "mixed", "various", "miscellaneous", "other", "trivia", 
+            "general trivia", "mixed trivia", "variety trivia", "rules", "wide world"
+        ],
+        "Animals": [
+            "animals", "pets", "mammals", "birds", "fish", "insects", "reptiles", 
+            "wildlife", "animal trivia", "pet trivia", "creature trivia"
+        ],
+        "Music": [
+            "music", "songs", "bands", "artists", "classical", "rock", "pop", "jazz", 
+            "music trivia", "song trivia", "band trivia", "musical trivia", "amateur radio", "radio"
+        ],
+        "Movies": [
+            "movies", "films", "cinema", "actors", "directors", "hollywood",
+            "movie trivia", "film trivia", "cinema trivia", "actor trivia"
+        ],
+        "Television": [
+            "television", "tv", "shows", "series", "programs", "broadcasting",
+            "tv trivia", "television trivia", "show trivia", "series trivia"
+        ],
+        "Literature": [
+            "literature", "books", "authors", "novels", "poetry", "writers",
+            "literature trivia", "book trivia", "author trivia", "novel trivia"
+        ],
+        "Science": [
+            "science", "physics", "chemistry", "biology", "astronomy", "technology", 
+            "science trivia", "physics trivia", "chemistry trivia", "biology trivia",
+            "astronomy trivia", "technology trivia"
+        ],
+        "History": [
+            "history", "historical", "ancient", "medieval", "wars", "politics",
+            "history trivia", "historical trivia", "war trivia", "political trivia"
+        ],
+        "Geography": [
+            "geography", "countries", "cities", "capitals", "world", "travel",
+            "geography trivia", "world trivia", "country trivia", "city trivia",
+            "global trivia", "currencies", "currency", "us currency", "u.s. currency"
+        ],
+        "Sports": [
+            "sports", "football", "basketball", "baseball", "soccer", "olympics",
+            "sports trivia", "football trivia", "basketball trivia", "olympic trivia",
+            "sports rules", "rules", "athletics", "games"
+        ],
+        "Food": [
+            "food", "cooking", "cuisine", "recipes", "restaurants", "drinks",
+            "food trivia", "cooking trivia", "cuisine trivia"
+        ],
+        "Art": [
+            "art", "painting", "sculpture", "artists", "museums", "visual arts",
+            "art trivia", "artist trivia", "painting trivia"
+        ],
+        "Games": [
+            "games", "board games", "video games", "videogames", "video_games", 
+            "puzzles", "card games", "gaming", "game trivia", "video game trivia",
+            "brainteasers", "brain teasers", "brain_teasers"
+        ],
+        "Religion": [
+            "religion", "christianity", "islam", "judaism", "buddhism", "hinduism",
+            "biblical", "spiritual", "faith", "religious trivia", "bible trivia"
+        ],
+        "People": [
+            "people", "celebrities", "biography", "famous", "personalities",
+            "people trivia", "celebrity trivia", "biography trivia", "famous people"
+        ],
+        "Entertainment": [
+            "entertainment", "pop culture", "show business", "performance",
+            "entertainment trivia", "pop culture trivia"
+        ],
+        "Technology": [
+            "technology", "computers", "internet", "software", "hardware", "digital",
+            "technology trivia", "computer trivia", "internet trivia", "amateur radio", "dx"
+        ],
+        "Health": [
+            "health", "medical", "medicine", "wellness", "fitness",
+            "health trivia", "medical trivia", "fitness trivia"
+        ],
+        "Government": [
+            "government", "politics", "political", "elections", "politicians",
+            "government trivia", "political trivia", "politics trivia"
+        ],
+        "Transportation": [
+            "transportation", "cars", "trains", "planes", "ships", "vehicles",
+            "transport trivia", "automotive trivia", "aviation trivia"
+        ],
+        "Business": [
+            "business", "economics", "finance", "money", "commerce", "trade",
+            "business trivia", "economics trivia", "finance trivia"
+        ],
+        "Education": [
+            "education", "schools", "universities", "learning", "academic",
+            "education trivia", "academic trivia", "school trivia"
+        ]
+    }
+} 

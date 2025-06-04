@@ -1,0 +1,49 @@
+{
+    "scraper": {
+        "base_url": "https://www.funtrivia.com",
+        "concurrency": 2,
+        "max_questions_per_run": 50,
+        "strict_mapping": false,
+        "timeouts": {
+            "page_load": 60000,
+            "network_idle": 45000,
+            "quiz_page": 45000,
+            "quiz_wait": 30000
+        },
+        "rate_limit": {
+            "requests_per_minute": 15,
+            "delay_between_requests": 4
+        },
+        "user_agents": [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+        ]
+    },
+    "storage": {
+        "output_dir": "output",
+        "images_dir": "assets/images",
+        "audio_dir": "assets/audio",
+        "csv_files": {
+            "multiple_choice": "multiple_choice.csv",
+            "true_false": "true_false.csv",
+            "sound": "sound.csv"
+        }
+    },
+    "google_sheets": {
+        "enabled": false,
+        "credentials_file": "credentials/service-account.json",
+        "spreadsheet_id": "",
+        "worksheets": {
+            "multiple_choice": "Multiple Choice",
+            "true_false": "True/False",
+            "sound": "Sound"
+        }
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "logs/scraper.log",
+        "max_size": 10485760,
+        "backup_count": 5
+    }
+} 
