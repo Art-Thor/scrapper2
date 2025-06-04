@@ -8,8 +8,11 @@ import sys
 import json
 import pandas as pd # type: ignore
 from pathlib import Path
+import os
 
-# Remove sys.path.append('src') and update imports to absolute
+# Add the parent directory to the path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.scraper.funtrivia import FunTriviaScraper
 from src.utils.csv_handler import CSVHandler
 
@@ -57,7 +60,7 @@ async def quick_scrape():
                             'Option4': '',
                             'CorrectAnswer': q.get('correct_answer', ''),
                             'Hint': q.get('hint', ''),
-                            'ImagePath': '',
+                            'ImagePath': q.get('media_path', ''),  # Handle image paths from photo quizzes
                             'AudioPath': ''
                         }
                         

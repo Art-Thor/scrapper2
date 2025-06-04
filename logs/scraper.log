@@ -1,0 +1,158 @@
+2025-06-04 18:02:22,774 - FunTriviaScraper - INFO - Scraper initialized successfully
+2025-06-04 18:02:22,776 - FunTriviaScraper - INFO - Current question indices: {'multiple_choice': 8622, 'true_false': 0, 'sound': 0}
+2025-06-04 18:02:35,692 - FunTriviaScraper - INFO - Navigated to quiz: https://www.funtrivia.com/quiz/religion/navigating-the-bible-328837.html
+2025-06-04 18:02:35,716 - FunTriviaScraper - INFO - No Start Quiz button found, proceeding to extract questions
+2025-06-04 18:02:36,127 - FunTriviaScraper - INFO - Extracted 10 questions from quiz page
+2025-06-04 18:03:06,133 - FunTriviaScraper - WARNING - Error submitting quiz: Timeout 30000ms exceeded.
+2025-06-04 18:03:06,134 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,135 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,135 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,135 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,135 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,136 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,136 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,136 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,136 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,137 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:03:06,137 - FunTriviaScraper - INFO - Successfully processed 10 questions from https://www.funtrivia.com/quiz/religion/navigating-the-bible-328837.html
+2025-06-04 18:03:06,192 - FunTriviaScraper - INFO - Browser closed successfully
+2025-06-04 18:03:06,192 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:15:59,560 - FunTriviaScraper - INFO - Scraper initialized successfully
+2025-06-04 18:15:59,561 - FunTriviaScraper - INFO - Current question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:16:12,825 - FunTriviaScraper - INFO - Navigated to quiz: https://www.funtrivia.com/quiz/religion/stories-of-genesis-people-30138.html
+2025-06-04 18:16:12,858 - FunTriviaScraper - INFO - No Start Quiz button found, proceeding to extract questions
+2025-06-04 18:16:13,239 - FunTriviaScraper - WARNING - All question extraction strategies failed
+2025-06-04 18:16:13,239 - FunTriviaScraper - WARNING - No questions found on quiz page: https://www.funtrivia.com/quiz/religion/stories-of-genesis-people-30138.html
+2025-06-04 18:16:13,277 - FunTriviaScraper - INFO - Browser closed successfully
+2025-06-04 18:16:13,277 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:25:29,678 - FunTriviaScraper - INFO - Scraper initialized successfully
+2025-06-04 18:25:29,680 - FunTriviaScraper - INFO - Current question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:25:43,181 - FunTriviaScraper - INFO - Strategy 2 (radio groups) succeeded with 10 questions
+2025-06-04 18:25:43,213 - FunTriviaScraper - INFO - Browser closed successfully
+2025-06-04 18:25:43,213 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:28:33,298 - FunTriviaScraper - INFO - Scraper initialized successfully
+2025-06-04 18:28:33,301 - FunTriviaScraper - INFO - Current question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:28:45,366 - FunTriviaScraper - INFO - Navigated to quiz: https://www.funtrivia.com/quiz/television/top-10-tv-shows-of-the-1978-79-season-419667.html
+2025-06-04 18:28:45,400 - FunTriviaScraper - INFO - No Start Quiz button found, proceeding to extract questions
+2025-06-04 18:29:30,405 - FunTriviaScraper - WARNING - Quiz form not found with primary selectors, trying alternatives
+2025-06-04 18:29:30,507 - FunTriviaScraper - WARNING - All question extraction strategies failed
+2025-06-04 18:29:30,507 - FunTriviaScraper - WARNING - No questions found on quiz page: https://www.funtrivia.com/quiz/television/top-10-tv-shows-of-the-1978-79-season-419667.html
+2025-06-04 18:29:30,539 - FunTriviaScraper - INFO - Browser closed successfully
+2025-06-04 18:29:30,539 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:30:25,655 - FunTriviaScraper - INFO - Scraper initialized successfully
+2025-06-04 18:30:25,658 - FunTriviaScraper - INFO - Current question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:31:16,882 - FunTriviaScraper - ERROR - Error scraping quiz https://www.funtrivia.com/quiz/brainteasers/wheel-of-torture-2-419826.html: Timeout 30000ms exceeded.
+2025-06-04 18:31:16,930 - FunTriviaScraper - INFO - Browser closed successfully
+2025-06-04 18:31:16,930 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:34:04,166 - FunTriviaScraper - INFO - Scraper initialized successfully
+2025-06-04 18:34:04,170 - FunTriviaScraper - INFO - Current question indices: {'multiple_choice': 8632, 'true_false': 0, 'sound': 0}
+2025-06-04 18:34:10,579 - FunTriviaScraper - INFO - Navigated to quiz: https://www.funtrivia.com/quiz/humanities/funtrivia-humanities-mix-vol-19-416258.html
+2025-06-04 18:34:10,593 - FunTriviaScraper - DEBUG - Quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'Trivia Questions'}
+2025-06-04 18:34:10,611 - FunTriviaScraper - INFO - No Start Quiz button found, proceeding to extract questions
+2025-06-04 18:34:10,625 - FunTriviaScraper - DEBUG - No .questionBlock elements found
+2025-06-04 18:34:10,641 - FunTriviaScraper - DEBUG - Found 43 radio inputs total
+2025-06-04 18:34:10,820 - FunTriviaScraper - DEBUG - Found 10 radio input groups: ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10']
+2025-06-04 18:34:10,891 - FunTriviaScraper - INFO - Strategy 2 (radio groups) succeeded with 10 questions
+2025-06-04 18:34:10,892 - FunTriviaScraper - INFO - Extracted 10 questions from quiz page
+2025-06-04 18:34:40,899 - FunTriviaScraper - WARNING - Error submitting quiz: Timeout 30000ms exceeded.
+2025-06-04 18:34:40,900 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,900 - FunTriviaScraper - DEBUG - Processed question 1: What do the words radar, nun and kayak have in com...
+2025-06-04 18:34:40,901 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,901 - FunTriviaScraper - DEBUG - Processed question 2: Contrapposto is an artistic term which means count...
+2025-06-04 18:34:40,901 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,901 - FunTriviaScraper - DEBUG - Processed question 3: Finish the phrase : Plain as ______....
+2025-06-04 18:34:40,902 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,902 - FunTriviaScraper - DEBUG - Processed question 4: Which word is NOT a synonym for "ghost"?...
+2025-06-04 18:34:40,902 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,902 - FunTriviaScraper - DEBUG - Processed question 5: Gustave Caillebotte, a wealthy member and patron o...
+2025-06-04 18:34:40,902 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,902 - FunTriviaScraper - DEBUG - Processed question 6: The goddess of war known as the Morrigan is associ...
+2025-06-04 18:34:40,903 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,903 - FunTriviaScraper - DEBUG - Processed question 7: Which of these words is linguistically the odd one...
+2025-06-04 18:34:40,903 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,903 - FunTriviaScraper - DEBUG - Processed question 8: Poseidon and Athena never really got along. They w...
+2025-06-04 18:34:40,903 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,903 - FunTriviaScraper - DEBUG - Processed question 9: In ancient Greek theatre, who voiced female roles ...
+2025-06-04 18:34:40,903 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:34:40,903 - FunTriviaScraper - DEBUG - Processed question 10: Which of the following terms was used by Frank Llo...
+2025-06-04 18:34:40,903 - FunTriviaScraper - INFO - Successfully processed 10 questions from https://www.funtrivia.com/quiz/humanities/funtrivia-humanities-mix-vol-19-416258.html
+2025-06-04 18:34:40,961 - FunTriviaScraper - INFO - Browser closed successfully
+2025-06-04 18:34:40,961 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8642, 'true_false': 0, 'sound': 0}
+2025-06-04 18:36:51,274 - FunTriviaScraper - INFO - Scraper initialized successfully
+2025-06-04 18:36:51,274 - FunTriviaScraper - INFO - Current question indices: {'multiple_choice': 8642, 'true_false': 0, 'sound': 0}
+2025-06-04 18:37:09,207 - FunTriviaScraper - INFO - Navigated to quiz: https://www.funtrivia.com/quiz/movies/penguins-at-play-417480.html
+2025-06-04 18:37:09,215 - FunTriviaScraper - DEBUG - Quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'Trivia Questions'}
+2025-06-04 18:37:09,230 - FunTriviaScraper - INFO - No Start Quiz button found, proceeding to extract questions
+2025-06-04 18:37:09,243 - FunTriviaScraper - DEBUG - No .questionBlock elements found
+2025-06-04 18:37:09,263 - FunTriviaScraper - DEBUG - Found 42 radio inputs total
+2025-06-04 18:37:09,385 - FunTriviaScraper - DEBUG - Found 10 radio input groups: ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10']
+2025-06-04 18:37:09,474 - FunTriviaScraper - INFO - Strategy 2 (radio groups) succeeded with 10 questions
+2025-06-04 18:37:09,474 - FunTriviaScraper - INFO - Extracted 10 questions from quiz page
+2025-06-04 18:37:39,484 - FunTriviaScraper - WARNING - Error submitting quiz: Timeout 30000ms exceeded.
+2025-06-04 18:37:39,487 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,487 - FunTriviaScraper - DEBUG - Processed question 1: Amongst the riffraff of Rick's Café Américain, Ils...
+2025-06-04 18:37:39,487 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,487 - FunTriviaScraper - DEBUG - Processed question 2: Norman Bates discusses his personal philosophy wit...
+2025-06-04 18:37:39,487 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,487 - FunTriviaScraper - DEBUG - Processed question 3: Terry Malloy sits in the backseat of a car with hi...
+2025-06-04 18:37:39,488 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,488 - FunTriviaScraper - DEBUG - Processed question 4: General Buck Turgidson and the Soviet ambassador b...
+2025-06-04 18:37:39,488 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,488 - FunTriviaScraper - DEBUG - Processed question 5: Norma Desmond, still clinging to her fantasies of ...
+2025-06-04 18:37:39,488 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,488 - FunTriviaScraper - DEBUG - Processed question 6: Ready to make an arrest and wrap up a labyrinthine...
+2025-06-04 18:37:39,489 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,489 - FunTriviaScraper - DEBUG - Processed question 7: The eccentric Osgood Fielding III helps two musici...
+2025-06-04 18:37:39,489 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,489 - FunTriviaScraper - DEBUG - Processed question 8: Mortimer Brewster explains to his darling that he ...
+2025-06-04 18:37:39,489 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,489 - FunTriviaScraper - DEBUG - Processed question 9: In the newsroom of "The Morning Post," Walter Burn...
+2025-06-04 18:37:39,489 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:37:39,489 - FunTriviaScraper - DEBUG - Processed question 10: Juror 8 pulls out a knife identical to the one the...
+2025-06-04 18:37:39,490 - FunTriviaScraper - INFO - Successfully processed 10 questions from https://www.funtrivia.com/quiz/movies/penguins-at-play-417480.html
+2025-06-04 18:37:39,528 - FunTriviaScraper - INFO - Browser closed successfully
+2025-06-04 18:37:39,528 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8652, 'true_false': 0, 'sound': 0}
+2025-06-04 18:38:10,620 - FunTriviaScraper - INFO - Scraper initialized successfully
+2025-06-04 18:38:10,621 - FunTriviaScraper - INFO - Current question indices: {'multiple_choice': 8652, 'true_false': 0, 'sound': 0}
+2025-06-04 18:38:22,186 - FunTriviaScraper - INFO - Navigated to quiz: https://www.funtrivia.com/quiz/world/us-supreme-court-cases-that-changed-society-410637.html
+2025-06-04 18:38:22,196 - FunTriviaScraper - DEBUG - Quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'Trivia Questions'}
+2025-06-04 18:38:22,213 - FunTriviaScraper - INFO - No Start Quiz button found, proceeding to extract questions
+2025-06-04 18:38:22,231 - FunTriviaScraper - DEBUG - No .questionBlock elements found
+2025-06-04 18:38:22,263 - FunTriviaScraper - DEBUG - Found 43 radio inputs total
+2025-06-04 18:38:22,432 - FunTriviaScraper - DEBUG - Found 10 radio input groups: ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10']
+2025-06-04 18:38:22,536 - FunTriviaScraper - INFO - Strategy 2 (radio groups) succeeded with 10 questions
+2025-06-04 18:38:22,536 - FunTriviaScraper - INFO - Extracted 10 questions from quiz page
+2025-06-04 18:38:52,544 - FunTriviaScraper - WARNING - Error submitting quiz: Timeout 30000ms exceeded.
+2025-06-04 18:38:52,545 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,546 - FunTriviaScraper - DEBUG - Processed question 1: In Marbury v. Madison (1803), the Supreme Court es...
+2025-06-04 18:38:52,546 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,546 - FunTriviaScraper - DEBUG - Processed question 2: Civil rights legislation concerns us all as a soci...
+2025-06-04 18:38:52,547 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,547 - FunTriviaScraper - DEBUG - Processed question 3: The Court has issued many opinions dealing with th...
+2025-06-04 18:38:52,547 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,547 - FunTriviaScraper - DEBUG - Processed question 4: Which of the following cases deals with the 6th Am...
+2025-06-04 18:38:52,547 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,547 - FunTriviaScraper - DEBUG - Processed question 5: "Redistricting" is a subject that becomes an issue...
+2025-06-04 18:38:52,547 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,548 - FunTriviaScraper - DEBUG - Processed question 6: The Constitution does not define speech. It has ta...
+2025-06-04 18:38:52,548 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,548 - FunTriviaScraper - DEBUG - Processed question 7: The state of Wisconsin mandated school attendance ...
+2025-06-04 18:38:52,548 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,548 - FunTriviaScraper - DEBUG - Processed question 8: We all know that the Constitution is the supreme l...
+2025-06-04 18:38:52,548 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,548 - FunTriviaScraper - DEBUG - Processed question 9: In Marbury v. Madison (1803), the Supreme Court es...
+2025-06-04 18:38:52,549 - FunTriviaScraper - WARNING - Unknown topic: Trivia Questions, defaulting to General
+2025-06-04 18:38:52,549 - FunTriviaScraper - DEBUG - Processed question 10: Guns! A hot button issue in the U.S. for many year...
+2025-06-04 18:38:52,549 - FunTriviaScraper - INFO - Successfully processed 10 questions from https://www.funtrivia.com/quiz/world/us-supreme-court-cases-that-changed-society-410637.html
+2025-06-04 18:38:56,690 - FunTriviaScraper - INFO - Navigated to quiz: https://www.funtrivia.com/quiz/world/the-supremes-411423.html
+2025-06-04 18:38:56,703 - FunTriviaScraper - DEBUG - Quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'Trivia Questions'}
+2025-06-04 18:38:56,719 - FunTriviaScraper - INFO - No Start Quiz button found, proceeding to extract questions
+2025-06-04 18:38:56,730 - FunTriviaScraper - DEBUG - No .questionBlock elements found
+2025-06-04 18:38:56,733 - FunTriviaScraper - DEBUG - Found 0 radio inputs total
+2025-06-04 18:38:56,733 - FunTriviaScraper - DEBUG - No radio inputs found on page
+2025-06-04 18:38:56,755 - FunTriviaScraper - DEBUG - Found 89 potential question elements
+2025-06-04 18:38:56,915 - FunTriviaScraper - DEBUG - Found 18 potential numbered question elements
+2025-06-04 18:38:57,060 - FunTriviaScraper - WARNING - All question extraction strategies failed
+2025-06-04 18:38:57,060 - FunTriviaScraper - WARNING - No questions found on quiz page: https://www.funtrivia.com/quiz/world/the-supremes-411423.html
+2025-06-04 18:38:57,098 - FunTriviaScraper - INFO - Browser closed successfully
+2025-06-04 18:38:57,098 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8662, 'true_false': 0, 'sound': 0}

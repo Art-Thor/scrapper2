@@ -226,6 +226,14 @@ class FunTriviaScraper(BaseScraper):
                 quiz_metadata = await self._extract_quiz_metadata(page)
                 self.logger.debug(f"Quiz metadata: {quiz_metadata}")
 
+                # Check quiz type - only process Multiple Choice and Photo Quiz
+                quiz_type = await self._detect_quiz_type(page)
+                self.logger.info(f"Detected quiz type: {quiz_type}")
+                
+                if quiz_type not in ['Multiple Choice', 'Photo Quiz']:
+                    self.logger.info(f"Skipping {quiz_type} - not compatible with multiple choice format")
+                    return []
+
                 # 1. Click "Start Quiz" button if present
                 try:
                     start_btn = await page.query_selector('input[type="submit"][value*="Start"], input[value*="Take Quiz"], button:has-text("Start")')
@@ -245,7 +253,10 @@ class FunTriviaScraper(BaseScraper):
                     self.logger.warning("Quiz form not found with primary selectors, trying alternatives")
 
                 # 3. Extract questions and options with robust selectors and fallbacks
-                questions = await self._extract_questions_robust(page)
+                if quiz_type == 'Photo Quiz':
+                    questions = await self._extract_photo_quiz_questions(page)
+                else:
+                    questions = await self._extract_questions_robust(page)
                 
                 if not questions:
                     self.logger.warning(f"No questions found on quiz page: {quiz_url}")
@@ -262,7 +273,7 @@ class FunTriviaScraper(BaseScraper):
                     results_with_answers = questions
 
                 # 5. Process questions through existing pipeline for proper formatting/mapping
-                processed_questions = self._process_extracted_questions(
+                processed_questions = await self._process_extracted_questions(
                     results_with_answers, {}, quiz_metadata  # Empty descriptions dict for now
                 )
                 
@@ -275,8 +286,156 @@ class FunTriviaScraper(BaseScraper):
         finally:
             await context.close()
 
+    async def _detect_quiz_type(self, page: Page) -> str:
+        """Detect the type of quiz from the page content."""
+        try:
+            quiz_type = await page.evaluate("""
+                () => {
+                    // Strategy 1: Look for quiz type in page text/headings
+                    const pageText = document.body.innerText.toLowerCase();
+                    
+                    // Check for explicit quiz type mentions
+                    if (pageText.includes('photo quiz')) return 'Photo Quiz';
+                    if (pageText.includes('match quiz')) return 'Match Quiz';
+                    if (pageText.includes('ordering quiz')) return 'Ordering Quiz';
+                    if (pageText.includes('label quiz')) return 'Label Quiz';
+                    if (pageText.includes('classification quiz')) return 'Classification Quiz';
+                    if (pageText.includes('multiple choice')) return 'Multiple Choice';
+                    
+                    // Strategy 2: Look for images in question areas (indicates Photo Quiz)
+                    const questionImages = document.querySelectorAll('img');
+                    let questionAreaImages = 0;
+                    
+                    questionImages.forEach(img => {
+                        const src = img.src || '';
+                        const alt = img.alt || '';
+                        // Filter out UI images, look for content images
+                        if (!src.includes('icon') && !src.includes('button') && 
+                            !src.includes('logo') && !alt.includes('icon') &&
+                            img.width > 50 && img.height > 50) {
+                            questionAreaImages++;
+                        }
+                    });
+                    
+                    if (questionAreaImages > 0) return 'Photo Quiz';
+                    
+                    // Strategy 3: Look for specific UI patterns
+                    // Match quiz has drag/drop or connection elements
+                    if (document.querySelector('.match-item, .drag-item, .drop-zone')) {
+                        return 'Match Quiz';
+                    }
+                    
+                    // Ordering quiz has sortable lists
+                    if (document.querySelector('.sortable, .order-item, [draggable="true"]')) {
+                        return 'Ordering Quiz';
+                    }
+                    
+                    // Label quiz has clickable areas on images
+                    if (document.querySelector('.label-point, .clickable-area, map area')) {
+                        return 'Label Quiz';
+                    }
+                    
+                    // Strategy 4: Default to Multiple Choice if we find radio buttons
+                    const radioInputs = document.querySelectorAll('input[type="radio"]');
+                    if (radioInputs.length > 0) {
+                        return 'Multiple Choice';
+                    }
+                    
+                    // Strategy 5: Look at URL patterns
+                    const url = window.location.href;
+                    if (url.includes('photo')) return 'Photo Quiz';
+                    if (url.includes('match')) return 'Match Quiz';
+                    if (url.includes('order')) return 'Ordering Quiz';
+                    
+                    return 'Multiple Choice'; // Default fallback
+                }
+            """)
+            
+            return quiz_type
+            
+        except Exception as e:
+            self.logger.debug(f"Error detecting quiz type: {e}")
+            return "Multiple Choice"  # Default fallback
+
+    async def _extract_photo_quiz_questions(self, page: Page) -> List[Dict[str, Any]]:
+        """Extract questions from Photo Quiz format with image handling."""
+        try:
+            questions = await page.evaluate("""
+                () => {
+                    const questions = [];
+                    
+                    // Look for question patterns in Photo Quiz format
+                    const questionElements = document.querySelectorAll('b, strong, .question');
+                    
+                    questionElements.forEach((qEl, index) => {
+                        const text = qEl.textContent.trim();
+                        
+                        // Check if this looks like a numbered question
+                        const questionMatch = text.match(/^(\\d+)\\.(.*)/);
+                        if (questionMatch) {
+                            const questionNumber = questionMatch[1];
+                            const questionText = questionMatch[2].trim();
+                            
+                            // Find associated image near this question
+                            let associatedImage = null;
+                            let current = qEl;
+                            
+                            // Look for images in the vicinity of the question
+                            for (let i = 0; i < 5; i++) {
+                                if (current.nextElementSibling) {
+                                    current = current.nextElementSibling;
+                                    const img = current.querySelector('img') || 
+                                               (current.tagName === 'IMG' ? current : null);
+                                    
+                                    if (img && img.src && !img.src.includes('icon') && 
+                                        !img.src.includes('button') && img.width > 50) {
+                                        associatedImage = img.src;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Find radio buttons for this question
+                            const radioInputs = document.querySelectorAll(`input[name="q${questionNumber}"]`);
+                            const options = Array.from(radioInputs).map(radio => radio.value).filter(v => v);
+                            
+                            if (questionText && options.length >= 2) {
+                                questions.push({
+                                    question: questionText,
+                                    options: options,
+                                    questionNumber: questionNumber,
+                                    imageUrl: associatedImage,
+                                    isPhotoQuiz: true
+                                });
+                            }
+                        }
+                    });
+                    
+                    return questions;
+                }
+            """)
+            
+            # Download images for photo quiz questions
+            for question in questions:
+                if question.get('imageUrl'):
+                    question_id = f"temp_{question['questionNumber']}"
+                    local_image_path = await self.download_media(
+                        question['imageUrl'], 
+                        'image', 
+                        question_id
+                    )
+                    question['image_path'] = local_image_path
+                    self.logger.info(f"Downloaded image for question {question['questionNumber']}")
+            
+            self.logger.info(f"Extracted {len(questions)} photo quiz questions")
+            return questions
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting photo quiz questions: {e}")
+            return []
+
     async def _extract_questions_robust(self, page: Page) -> List[Dict[str, Any]]:
-        """Extract questions using multiple robust strategies."""
+        """Extract questions using multiple robust strategies with better validation."""
         questions = []
         
         # Strategy 1: Look for .questionBlock (newer FunTrivia format)
@@ -286,64 +445,307 @@ class FunTriviaScraper(BaseScraper):
                 self.logger.debug(f"Found {len(question_blocks)} .questionBlock elements")
                 for i, block in enumerate(question_blocks):
                     question_data = await self._extract_question_from_block(block, i+1)
-                    if question_data:
+                    if question_data and self._validate_question_data(question_data):
                         questions.append(question_data)
+                    elif question_data:
+                        self.logger.debug(f"Question {i+1} failed validation: {question_data.get('question', '')[:50]}")
                 if questions:
+                    self.logger.info(f"Strategy 1 (.questionBlock) succeeded with {len(questions)} questions")
                     return questions
+            else:
+                self.logger.debug("No .questionBlock elements found")
         except Exception as e:
             self.logger.debug(f"Strategy 1 (.questionBlock) failed: {e}")
 
-        # Strategy 2: Look for numbered questions in bold tags
-        try:
-            bold_elements = await page.query_selector_all('b')
-            question_elements = []
-            for b in bold_elements:
-                text = await b.inner_text()
-                if re.match(r'^\d+\.\s', text.strip()):
-                    question_elements.append(b)
-            
-            if question_elements:
-                self.logger.debug(f"Found {len(question_elements)} numbered question elements")
-                for i, qel in enumerate(question_elements):
-                    question_data = await self._extract_question_from_numbered_element(page, qel, i+1)
-                    if question_data:
-                        questions.append(question_data)
-                if questions:
-                    return questions
-        except Exception as e:
-            self.logger.debug(f"Strategy 2 (numbered bold) failed: {e}")
-
-        # Strategy 3: Look for radio input groups
+        # Strategy 2: Look for forms with radio input groups (most reliable for FunTrivia)
         try:
             # Find all radio inputs and group by name attribute
             radio_inputs = await page.query_selector_all('input[type="radio"]')
+            self.logger.debug(f"Found {len(radio_inputs)} radio inputs total")
+            
             if radio_inputs:
                 question_groups = {}
                 for radio in radio_inputs:
                     name = await radio.get_attribute('name')
-                    if name and name.startswith('q'):
+                    if name and (name.startswith('q') or 'question' in name.lower()):
                         if name not in question_groups:
                             question_groups[name] = []
                         question_groups[name].append(radio)
                 
-                self.logger.debug(f"Found {len(question_groups)} radio input groups")
-                for i, (name, radios) in enumerate(question_groups.items(), 1):
-                    question_data = await self._extract_question_from_radio_group(page, name, radios, i)
-                    if question_data:
-                        questions.append(question_data)
-                if questions:
-                    return questions
+                if question_groups:
+                    self.logger.debug(f"Found {len(question_groups)} radio input groups: {list(question_groups.keys())}")
+                    for i, (name, radios) in enumerate(question_groups.items(), 1):
+                        question_data = await self._extract_question_from_radio_group_improved(page, name, radios, i)
+                        if question_data and self._validate_question_data(question_data):
+                            questions.append(question_data)
+                        elif question_data:
+                            self.logger.debug(f"Question {i} from radio group '{name}' failed validation: {question_data.get('question', '')[:50]}")
+                    if questions:
+                        self.logger.info(f"Strategy 2 (radio groups) succeeded with {len(questions)} questions")
+                        return questions
+                else:
+                    self.logger.debug("No valid radio input groups found (no q* or question* names)")
+            else:
+                self.logger.debug("No radio inputs found on page")
         except Exception as e:
-            self.logger.debug(f"Strategy 3 (radio groups) failed: {e}")
+            self.logger.debug(f"Strategy 2 (radio groups) failed: {e}")
+
+        # Strategy 3: Look for numbered questions in the page structure
+        try:
+            # Look for questions with specific numbering patterns
+            question_elements = await page.query_selector_all('b, strong, .question, .quiz-question')
+            self.logger.debug(f"Found {len(question_elements)} potential question elements")
+            
+            valid_questions = []
+            
+            for element in question_elements:
+                text = await element.inner_text()
+                # Check if this looks like a question (starts with number and has question mark or is substantial)
+                if (re.match(r'^\d+\.\s+.{10,}', text.strip()) and 
+                    (text.count('?') > 0 or len(text.strip()) > 20)):
+                    valid_questions.append(element)
+            
+            if valid_questions:
+                self.logger.debug(f"Found {len(valid_questions)} potential numbered question elements")
+                for i, qel in enumerate(valid_questions):
+                    question_data = await self._extract_question_from_numbered_element_improved(page, qel, i+1)
+                    if question_data and self._validate_question_data(question_data):
+                        questions.append(question_data)
+                    elif question_data:
+                        self.logger.debug(f"Numbered question {i+1} failed validation: {question_data.get('question', '')[:50]}")
+                if questions:
+                    self.logger.info(f"Strategy 3 (numbered elements) succeeded with {len(questions)} questions")
+                    return questions
+            else:
+                self.logger.debug("No valid numbered questions found")
+        except Exception as e:
+            self.logger.debug(f"Strategy 3 (numbered elements) failed: {e}")
 
         self.logger.warning("All question extraction strategies failed")
         return questions
 
+    def _validate_question_data(self, question_data: Dict[str, Any]) -> bool:
+        """Validate that extracted question data is reasonable."""
+        if not question_data:
+            return False
+            
+        question = question_data.get('question', '')
+        options = question_data.get('options', [])
+        
+        # Basic validation rules - less strict
+        if len(question.strip()) < 5:  # Question too short (reduced from 10)
+            self.logger.debug(f"Question too short: '{question}'")
+            return False
+            
+        if len(question.strip()) > 1000:  # Question too long (increased from 500)
+            self.logger.debug(f"Question too long: '{question[:50]}...'")
+            return False
+            
+        if len(options) < 2:  # Need at least 2 options
+            self.logger.debug(f"Not enough options: {len(options)}")
+            return False
+            
+        # Check for obviously invalid patterns (less strict)
+        question_lower = question.lower()
+        critical_invalid_patterns = [
+            'javascript:', 'onclick=', '<script', 'document.', 'window.',
+            'function(', 'var ', 'alert(', 'console.log'
+        ]
+        
+        for pattern in critical_invalid_patterns:
+            if pattern in question_lower:
+                self.logger.debug(f"Question contains invalid pattern '{pattern}': '{question}'")
+                return False
+        
+        # Check if options look reasonable (less strict)
+        valid_options = 0
+        for option in options:
+            option_clean = option.strip()
+            if len(option_clean) >= 1 and len(option_clean) <= 500:  # Increased max length
+                valid_options += 1
+        
+        if valid_options < 2:
+            self.logger.debug(f"Not enough valid options: {valid_options}/{len(options)}")
+            return False
+        
+        # Additional check: question should have some alphabetic content
+        if not re.search(r'[a-zA-Z]{3,}', question):
+            self.logger.debug(f"Question lacks alphabetic content: '{question}'")
+            return False
+        
+        return True
+
+    async def _extract_question_from_radio_group_improved(self, page: Page, name: str, radios: List, question_num: int) -> Optional[Dict[str, Any]]:
+        """Improved extraction from radio input group with better question text detection."""
+        try:
+            # Try to find question text by traversing DOM structure
+            first_radio = radios[0]
+            
+            # Strategy 1: Look for question text in form structure
+            question_text = await first_radio.evaluate('''
+                (el) => {
+                    // Look for question text in various parent structures
+                    let current = el;
+                    
+                    // Try to find a parent container that contains the question
+                    for (let i = 0; i < 5; i++) {
+                        if (current.parentElement) {
+                            current = current.parentElement;
+                            
+                            // Look for text content that looks like a question
+                            const textContent = current.textContent || '';
+                            const lines = textContent.split('\\n').map(line => line.trim()).filter(line => line);
+                            
+                            for (const line of lines) {
+                                // Skip if it's just radio button text or short fragments
+                                if (line.length < 10 || line.length > 300) continue;
+                                
+                                // Look for question patterns
+                                if ((line.includes('?') || line.match(/^\\d+\\./)) && 
+                                    !line.toLowerCase().includes('click') &&
+                                    !line.toLowerCase().includes('drag') &&
+                                    !line.toLowerCase().includes('score')) {
+                                    return line;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Fallback: look for any substantial text before the radio buttons
+                    let walker = document.createTreeWalker(
+                        document.body,
+                        NodeFilter.SHOW_TEXT,
+                        null,
+                        false
+                    );
+                    
+                    let found = false;
+                    let node;
+                    while (node = walker.nextNode()) {
+                        if (node.parentElement && node.parentElement.contains(el)) {
+                            found = true;
+                        } else if (found && node.textContent.trim().length > 10) {
+                            const text = node.textContent.trim();
+                            if (text.includes('?') && text.length < 300) {
+                                return text;
+                            }
+                        }
+                    }
+                    
+                    return null;
+                }
+            ''')
+            
+            if question_text:
+                question_text = re.sub(r'^\d+\.\s*', '', question_text.strip())
+                
+                # Extract options from radio buttons
+                options = []
+                for radio in radios:
+                    # Get option text from value or associated label
+                    option_text = await radio.evaluate('''
+                        (el) => {
+                            // Try to get text from label
+                            const labels = document.querySelectorAll('label');
+                            for (const label of labels) {
+                                if (label.contains(el) || label.getAttribute('for') === el.id) {
+                                    let text = label.textContent.replace(el.value, '').trim();
+                                    // Remove radio button markers
+                                    text = text.replace(/^[a-d]\\)\\s*/i, '').trim();
+                                    if (text.length > 0) return text;
+                                }
+                            }
+                            
+                            // Fallback to value
+                            return el.value || el.nextSibling?.textContent?.trim() || '';
+                        }
+                    ''')
+                    
+                    if option_text and option_text.strip():
+                        options.append(option_text.strip())
+                
+                if len(options) >= 2:
+                    return {
+                        'question': question_text,
+                        'options': options,
+                        'questionNumber': str(question_num)
+                    }
+            
+        except Exception as e:
+            self.logger.debug(f"Error in improved radio group extraction: {e}")
+        return None
+
+    async def _extract_question_from_numbered_element_improved(self, page: Page, qel, question_num: int) -> Optional[Dict[str, Any]]:
+        """Improved extraction from numbered elements with better validation."""
+        try:
+            question_text = await qel.inner_text()
+            
+            # Clean up question text
+            question_text = re.sub(r'^\d+\.\s*', '', question_text.strip())
+            
+            # Validate this looks like a real question
+            if len(question_text) < 10 or not re.search(r'[a-zA-Z]', question_text):
+                return None
+            
+            # Find radio inputs for this question
+            # Try multiple naming patterns and nearby elements
+            radio_inputs = []
+            
+            # Pattern 1: Standard question naming
+            for pattern in [f'q{question_num}', f'question{question_num}', f'q{question_num}_answer']:
+                radios = await page.query_selector_all(f'input[name="{pattern}"]')
+                if radios:
+                    radio_inputs = radios
+                    break
+            
+            # Pattern 2: Look for radio inputs near this element
+            if not radio_inputs:
+                radio_inputs = await qel.evaluate('''
+                    (el) => {
+                        const radios = [];
+                        let current = el;
+                        
+                        // Look in next siblings
+                        while (current.nextElementSibling && radios.length < 10) {
+                            current = current.nextElementSibling;
+                            const foundRadios = current.querySelectorAll('input[type="radio"]');
+                            foundRadios.forEach(radio => radios.push(radio));
+                            
+                            // Stop if we find a reasonable number of radios or hit another question
+                            if (radios.length >= 2 && radios.length <= 8) break;
+                            if (current.textContent.match(/^\\d+\\./)) break;
+                        }
+                        
+                        return radios;
+                    }
+                ''')
+            
+            options = []
+            for radio in radio_inputs:
+                if hasattr(radio, 'get_attribute'):  # Playwright element
+                    value = await radio.get_attribute('value')
+                else:  # From evaluate
+                    value = radio.get('value') if hasattr(radio, 'get') else str(radio)
+                
+                if value and value.strip():
+                    options.append(value.strip())
+            
+            if len(options) >= 2:
+                return {
+                    'question': question_text,
+                    'options': options,
+                    'questionNumber': str(question_num)
+                }
+            
+        except Exception as e:
+            self.logger.debug(f"Error in improved numbered element extraction: {e}")
+        return None
+
     async def _extract_question_from_block(self, block, question_num: int) -> Optional[Dict[str, Any]]:
-        """Extract question from a .questionBlock element."""
+        """Extract question from a .questionBlock element with validation."""
         try:
             # Question text
-            qtext_el = await block.query_selector('.q, .question, b')
+            qtext_el = await block.query_selector('.q, .question, b, strong')
             if not qtext_el:
                 return None
             
@@ -355,16 +757,27 @@ class FunTriviaScraper(BaseScraper):
             radio_inputs = await block.query_selector_all('input[type="radio"]')
             for radio in radio_inputs:
                 # Try to get label text
-                label_text = await radio.evaluate('''
+                option_text = await radio.evaluate('''
                     (el) => {
-                        const label = el.closest('label') || el.parentNode;
-                        return label ? label.innerText.trim() : el.value;
+                        // Look for associated label
+                        const label = el.closest('label') || 
+                                     document.querySelector(`label[for="${el.id}"]`) ||
+                                     el.parentNode;
+                        
+                        if (label) {
+                            let text = label.textContent.trim();
+                            // Remove the radio value if it's duplicated
+                            text = text.replace(el.value, '').trim();
+                            // Remove radio button markers like a), b), etc.
+                            text = text.replace(/^[a-d]\\)\\s*/i, '').trim();
+                            return text || el.value;
+                        }
+                        return el.value;
                     }
                 ''')
-                if label_text:
-                    # Clean option text (remove radio button markers)
-                    clean_option = re.sub(r'^[a-d]\)\s*', '', label_text.strip(), flags=re.IGNORECASE)
-                    options.append(clean_option)
+                
+                if option_text and option_text.strip():
+                    options.append(option_text.strip())
             
             if question_text and len(options) >= 2:
                 return {
@@ -376,78 +789,11 @@ class FunTriviaScraper(BaseScraper):
             self.logger.debug(f"Error extracting from question block: {e}")
         return None
 
-    async def _extract_question_from_numbered_element(self, page: Page, qel, question_num: int) -> Optional[Dict[str, Any]]:
-        """Extract question from a numbered bold element."""
-        try:
-            question_text = await qel.inner_text()
-            question_text = re.sub(r'^\d+\.\s*', '', question_text.strip())
-            
-            # Find radio inputs for this question number
-            radio_inputs = await page.query_selector_all(f'input[name="q{question_num}"], input[name="question{question_num}"]')
-            
-            options = []
-            for radio in radio_inputs:
-                value = await radio.get_attribute('value')
-                if value:
-                    options.append(value.strip())
-            
-            if question_text and len(options) >= 2:
-                return {
-                    'question': question_text,
-                    'options': options,
-                    'questionNumber': str(question_num)
-                }
-        except Exception as e:
-            self.logger.debug(f"Error extracting numbered question: {e}")
-        return None
-
-    async def _extract_question_from_radio_group(self, page: Page, name: str, radios: List, question_num: int) -> Optional[Dict[str, Any]]:
-        """Extract question from a radio input group."""
-        try:
-            # Try to find question text near the first radio
-            first_radio = radios[0]
-            
-            # Look for question text in nearby elements
-            question_text = await first_radio.evaluate('''
-                (el) => {
-                    // Look for question text in preceding elements
-                    let current = el;
-                    while (current && current.previousElementSibling) {
-                        current = current.previousElementSibling;
-                        const text = current.innerText || current.textContent;
-                        if (text && text.trim().length > 10) {
-                            return text.trim();
-                        }
-                    }
-                    return null;
-                }
-            ''')
-            
-            if question_text:
-                question_text = re.sub(r'^\d+\.\s*', '', question_text.strip())
-            else:
-                question_text = f"Question {question_num}"
-            
-            options = []
-            for radio in radios:
-                value = await radio.get_attribute('value')
-                if value:
-                    options.append(value.strip())
-            
-            if len(options) >= 2:
-                return {
-                    'question': question_text,
-                    'options': options,
-                    'questionNumber': str(question_num)
-                }
-        except Exception as e:
-            self.logger.debug(f"Error extracting from radio group: {e}")
-        return None
-
     async def _submit_quiz_and_get_results(self, page: Page, questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Submit quiz answers and extract correct answers and hints from results page."""
         try:
             # Auto-select answers for all questions
+            selected_count = 0
             for i, question in enumerate(questions):
                 question_num = question.get('questionNumber', str(i+1))
                 # Try different naming patterns
@@ -455,29 +801,68 @@ class FunTriviaScraper(BaseScraper):
                     radios = await page.query_selector_all(f'input[name="{name_pattern}"]')
                     if radios:
                         await radios[0].click()  # Select first option
+                        selected_count += 1
+                        self.logger.debug(f"Selected answer for question {question_num}")
                         break
             
-            # Submit the quiz
+            self.logger.info(f"Selected answers for {selected_count}/{len(questions)} questions")
+            
+            if selected_count == 0:
+                self.logger.warning("No radio buttons found to select - cannot submit quiz")
+                return questions
+            
+            # Submit the quiz with multiple strategies
             submit_selectors = [
                 'input[type="submit"][value*="Score"]',
-                'input[type="submit"][value*="Submit"]',
+                'input[type="submit"][value*="Submit"]', 
+                'input[type="submit"][value*="Finish"]',
                 'button[type="submit"]',
-                'input[value*="Finish"]'
+                'input[value*="Finish"]',
+                'button:has-text("Submit")',
+                'button:has-text("Finish")',
+                '.submit-button'
             ]
             
             submit_btn = None
             for selector in submit_selectors:
-                submit_btn = await page.query_selector(selector)
-                if submit_btn:
-                    break
+                try:
+                    submit_btn = await page.query_selector(selector)
+                    if submit_btn:
+                        # Check if button is visible and enabled
+                        is_visible = await submit_btn.is_visible()
+                        is_enabled = await submit_btn.is_enabled()
+                        if is_visible and is_enabled:
+                            self.logger.debug(f"Found submit button with selector: {selector}")
+                            break
+                        else:
+                            submit_btn = None
+                except Exception:
+                    continue
             
             if submit_btn:
-                await submit_btn.click()
-                self.logger.info("Submitted quiz answers")
-                await page.wait_for_load_state('networkidle', timeout=TIMEOUTS['results_wait'])
-                
-                # Extract results with correct answers and hints
-                return await self._parse_results_page(page, questions)
+                try:
+                    await submit_btn.click()
+                    self.logger.info("Submitted quiz answers")
+                    
+                    # Wait for results page with longer timeout and multiple strategies
+                    try:
+                        # Strategy 1: Wait for network idle
+                        await page.wait_for_load_state('networkidle', timeout=60000)
+                    except Exception:
+                        try:
+                            # Strategy 2: Wait for specific result elements
+                            await page.wait_for_selector('.results, .quiz-results, .score, .explanation', timeout=45000)
+                        except Exception:
+                            # Strategy 3: Just wait a bit and proceed
+                            await asyncio.sleep(3)
+                            self.logger.warning("Results page load timeout - proceeding with available content")
+                    
+                    # Extract results with correct answers and hints
+                    return await self._parse_results_page(page, questions)
+                    
+                except Exception as e:
+                    self.logger.warning(f"Error during quiz submission: {e}")
+                    return questions
             else:
                 self.logger.warning("No submit button found")
                 return questions
@@ -639,7 +1024,7 @@ class FunTriviaScraper(BaseScraper):
         
         return questions
 
-    def _process_extracted_questions(self, questions: List[Dict[str, Any]], descriptions: Dict[str, str], metadata: Dict[str, str]) -> List[Dict[str, Any]]:
+    async def _process_extracted_questions(self, questions: List[Dict[str, Any]], descriptions: Dict[str, str], metadata: Dict[str, str]) -> List[Dict[str, Any]]:
         """Process and enhance extracted questions with metadata and descriptions."""
         processed_questions = []
         
@@ -664,6 +1049,22 @@ class FunTriviaScraper(BaseScraper):
             cleaned_question = self.text_processor.clean_question_text(question_text)
             cleaned_description = self.text_processor.clean_description_text(description)
             
+            # Handle image path for photo quiz questions
+            image_path = ''
+            if question_data.get('isPhotoQuiz') and question_data.get('imageUrl'):
+                # Download image with proper question ID
+                try:
+                    image_path = await self.download_media(
+                        question_data['imageUrl'], 
+                        'image', 
+                        question_id
+                    )
+                    if image_path:
+                        self.logger.info(f"Downloaded image for question {question_id}: {image_path}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to download image for {question_id}: {e}")
+                    image_path = question_data.get('image_path', '')
+            
             # Update question data with all metadata
             question_data.update({
                 "id": question_id,
@@ -673,7 +1074,8 @@ class FunTriviaScraper(BaseScraper):
                 "topic": self.map_topic(metadata['topic']),
                 "correct_answer": question_data.get('correct_answer', options[0] if options else ''),
                 "hint": question_data.get('hint', ''),
-                "description": cleaned_description
+                "description": cleaned_description,
+                "media_path": image_path if image_path else question_data.get('media_path', '')
             })
             
             processed_questions.append(question_data)
@@ -935,6 +1337,8 @@ class FunTriviaScraper(BaseScraper):
                         if (title.length > 3 && title.length < 30 && 
                             !title.match(/\d/) && // No numbers
                             !title.includes('?') && // No question marks
+                            !title.toLowerCase().includes('trivia') && // Not generic "trivia"
+                            !title.toLowerCase().includes('questions') && // Not generic "questions"
                             title.split(' ').length <= 4) { // Not too many words
                             return title;
                         }
