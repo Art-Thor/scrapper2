@@ -46,9 +46,10 @@ async def test_mapping_logic():
                 domain = await scraper._get_quiz_domain(page)
                 topic = await scraper._get_quiz_topic(page)
                 
-                # Map to standardized values
-                mapped_domain = scraper.map_domain(domain)
-                mapped_topic = scraper.map_topic(topic)
+                # Map to standardized values using centralized configuration
+                # This demonstrates the new centralized mapping approach
+                mapped_domain = scraper.scraper_config.map_domain(domain)
+                mapped_topic = scraper.scraper_config.map_topic(topic)
                 
                 print(f"   Raw Domain: '{domain}' → Mapped: '{mapped_domain}'")
                 print(f"   Raw Topic: '{topic}' → Mapped: '{mapped_topic}'")

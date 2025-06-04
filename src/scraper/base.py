@@ -18,25 +18,62 @@ class BaseScraper(ABC):
             return json.load(f)
 
     def _setup_logger(self) -> logging.Logger:
-        """Set up logging configuration."""
+        """Set up comprehensive logging configuration for both file and console output."""
         logger = logging.getLogger(self.__class__.__name__)
-        logger.setLevel(self.config['logging']['level'])
         
-        # File handler
-        fh = logging.FileHandler(self.config['logging']['file'])
-        fh.setLevel(self.config['logging']['level'])
+        # Prevent duplicate handlers if logger already exists
+        if logger.handlers:
+            return logger
+            
+        logger.setLevel(self.config['logging']['level'])
+        logger.propagate = False  # Prevent duplicate console output
+        
+        # Ensure log directory exists
+        log_file = self.config['logging']['file']
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+        
+        # File handler with rotation
+        try:
+            from logging.handlers import RotatingFileHandler
+            max_size = self.config['logging'].get('max_size', 10485760)  # 10MB default
+            backup_count = self.config['logging'].get('backup_count', 5)
+            
+            fh = RotatingFileHandler(
+                log_file, 
+                maxBytes=max_size, 
+                backupCount=backup_count,
+                encoding='utf-8'
+            )
+            fh.setLevel(self.config['logging']['level'])
+        except Exception as e:
+            # Fallback to regular file handler
+            fh = logging.FileHandler(log_file, encoding='utf-8')
+            fh.setLevel(self.config['logging']['level'])
+            print(f"Warning: Could not set up rotating file handler: {e}")
         
         # Console handler
         ch = logging.StreamHandler()
         ch.setLevel(self.config['logging']['level'])
         
-        # Formatter
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
+        # Enhanced formatters with more context
+        file_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - [%(funcName)s:%(lineno)d] - %(message)s'
+        )
+        console_formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s',
+            datefmt='%H:%M:%S'
+        )
+        
+        fh.setFormatter(file_formatter)
+        ch.setFormatter(console_formatter)
         
         logger.addHandler(fh)
         logger.addHandler(ch)
+        
+        # Log the logger initialization
+        logger.info(f"Logger initialized for {self.__class__.__name__}")
+        logger.debug(f"Log level: {self.config['logging']['level']}")
+        logger.debug(f"Log file: {log_file}")
         
         return logger
 
@@ -60,21 +97,6 @@ class BaseScraper(ABC):
         """Download media (image/audio) and return the local path."""
         pass
 
-    @abstractmethod
-    def map_difficulty(self, raw_difficulty: str) -> str:
-        """Map website's difficulty to standardized value."""
-        pass
-
-    @abstractmethod
-    def map_domain(self, raw_domain: str) -> str:
-        """Map website's domain to standardized value."""
-        pass
-
-    @abstractmethod
-    def map_topic(self, raw_topic: str) -> str:
-        """Map website's topic to standardized value."""
-        pass
-
     def _ensure_directories(self) -> None:
         """Ensure all required directories exist."""
         directories = [
@@ -86,12 +108,25 @@ class BaseScraper(ABC):
             Path(directory).mkdir(parents=True, exist_ok=True)
 
     async def _random_delay(self) -> None:
-        """Add random delay between requests to avoid rate limiting."""
+        """
+        Add random delay between requests to avoid rate limiting and detection.
+        
+        Uses configurable min/max delay ranges from config['scraper']['delays'].
+        Defaults to 1-3 seconds if not configured.
+        """
         import random
         import asyncio
-        delay = self.config['scraper']['rate_limit']['delay_between_requests']
-        jitter = random.uniform(0.5, 1.5)
-        await asyncio.sleep(delay * jitter)
+        
+        # Get delay configuration
+        delays_config = self.config['scraper'].get('delays', {})
+        min_delay = delays_config.get('min', 1.0)
+        max_delay = delays_config.get('max', 3.0)
+        
+        # Generate random delay within the configured range
+        delay = random.uniform(min_delay, max_delay)
+        
+        self.logger.debug(f"Adding random delay: {delay:.2f}s (range: {min_delay}-{max_delay}s)")
+        await asyncio.sleep(delay)
 
     def _get_random_user_agent(self) -> str:
         """Get a random user agent from the configured list."""

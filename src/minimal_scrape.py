@@ -48,6 +48,10 @@ async def quick_scrape():
                     # Format for CSV
                     formatted_questions = []
                     for q in questions:
+                        # Get question type to determine correct fields
+                        question_type = q.get('type', 'multiple_choice')
+                        
+                        # Base structure common to all question types
                         formatted = {
                             'Key': q.get('id', ''),
                             'Domain': q.get('domain', 'Culture'),
@@ -56,25 +60,59 @@ async def quick_scrape():
                             'Question': q.get('question', ''),
                             'Option1': '',
                             'Option2': '',
-                            'Option3': '',
-                            'Option4': '',
                             'CorrectAnswer': q.get('correct_answer', ''),
                             'Hint': q.get('hint', ''),
-                            'ImagePath': q.get('media_path', ''),  # Handle image paths from photo quizzes
-                            'AudioPath': ''
+                            'Description': q.get('description', '')
                         }
+
+                        # Add question type-specific fields
+                        if question_type == 'multiple_choice':
+                            # Multiple choice has 4 options and ImagePath
+                            formatted.update({
+                                'Option3': '',
+                                'Option4': '',
+                                'ImagePath': q.get('media_path', '')
+                            })
+                        elif question_type == 'true_false':
+                            # True/false only has 2 options, no media path
+                            pass  # Already has Option1, Option2
+                        elif question_type == 'sound':
+                            # Sound has 4 options and AudioPath
+                            formatted.update({
+                                'Option3': '',
+                                'Option4': '',
+                                'AudioPath': q.get('media_path', '')
+                            })
                         
+                        # Fill in options based on question type
                         options = q.get('options', [])
-                        for i, option in enumerate(options[:4], 1):
+                        max_options = 4 if question_type in ['multiple_choice', 'sound'] else 2
+                        for i, option in enumerate(options[:max_options], 1):
                             formatted[f'Option{i}'] = option.strip()
                         
                         formatted_questions.append(formatted)
                     
-                    # Save to CSV
-                    csv_file = config['storage']['csv_files']['multiple_choice']
-                    count = csv_handler.append_to_csv(formatted_questions, csv_file, 'multiple_choice')
+                    # Save to appropriate CSV based on question type
+                    questions_by_type = {
+                        'multiple_choice': [],
+                        'true_false': [],
+                        'sound': []
+                    }
                     
-                    print(f"💾 Saved {count} questions to output/{csv_file}")
+                    for formatted_q in formatted_questions:
+                        q_type = next((q.get('type', 'multiple_choice') for q in questions 
+                                     if q.get('id') == formatted_q['Key']), 'multiple_choice')
+                        questions_by_type[q_type].append(formatted_q)
+                    
+                    total_saved = 0
+                    for q_type, type_questions in questions_by_type.items():
+                        if type_questions:
+                            csv_file = config['storage']['csv_files'][q_type]
+                            count = csv_handler.append_to_csv(type_questions, csv_file, q_type)
+                            total_saved += count
+                            print(f"💾 Saved {count} {q_type} questions to output/{csv_file}")
+                    
+                    print(f"💾 Total saved: {total_saved} questions")
                     
                     # Show first question as example
                     if formatted_questions:

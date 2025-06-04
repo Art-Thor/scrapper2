@@ -17,22 +17,70 @@ from utils.monitoring import ScrapingMetrics, HealthMonitor
 from utils.compliance import run_compliance_check, EthicalScraper
 
 def setup_logging(config: Dict[str, Any]) -> None:
-    """Set up logging configuration."""
+    """Set up comprehensive logging configuration for both file and console output."""
     log_file = config['logging']['file']
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
     
-    logging.basicConfig(
-        level=config['logging']['level'],
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler()
-        ]
+    # Get the root logger
+    root_logger = logging.getLogger()
+    
+    # Clear any existing handlers to avoid duplicates
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+    
+    # Set logging level
+    log_level = getattr(logging, config['logging']['level'].upper(), logging.INFO)
+    root_logger.setLevel(log_level)
+    
+    # File handler with rotation
+    try:
+        from logging.handlers import RotatingFileHandler
+        max_size = config['logging'].get('max_size', 10485760)  # 10MB default
+        backup_count = config['logging'].get('backup_count', 5)
+        
+        file_handler = RotatingFileHandler(
+            log_file, 
+            maxBytes=max_size, 
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        file_handler.setLevel(log_level)
+    except Exception as e:
+        # Fallback to regular file handler
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_handler.setLevel(log_level)
+        print(f"Warning: Could not set up rotating file handler: {e}")
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(log_level)
+    
+    # Enhanced formatters with more context
+    file_formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - [%(funcName)s:%(lineno)d] - %(message)s'
     )
+    console_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%H:%M:%S'
+    )
+    
+    file_handler.setFormatter(file_formatter)
+    console_handler.setFormatter(console_formatter)
+    
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+    
+    # Log the logger initialization
+    root_logger.info(f"Logging initialized - Level: {config['logging']['level']}")
+    root_logger.info(f"Log file: {log_file}")
+    root_logger.debug("Debug logging enabled")
 
 def format_question_data_enhanced(question: Dict[str, Any]) -> Dict[str, Any]:
     """Enhanced formatting of question data to match CSV template structure exactly."""
-    # Base structure matching the CSV template
+    # Get question type to determine correct fields
+    question_type = question.get('type', 'multiple_choice')
+    
+    # Base structure common to all question types
     formatted = {
         'Key': question.get('id', ''),
         'Domain': question.get('domain', 'Culture'),
@@ -41,34 +89,45 @@ def format_question_data_enhanced(question: Dict[str, Any]) -> Dict[str, Any]:
         'Question': question.get('question', ''),
         'Option1': '',
         'Option2': '',
-        'Option3': '',
-        'Option4': '',
         'CorrectAnswer': question.get('correct_answer', ''),
         'Hint': question.get('hint', ''),
-        'Description': question.get('description', ''),
-        'ImagePath': '',
-        'AudioPath': ''
+        'Description': question.get('description', '')
     }
+
+    # Add question type-specific fields
+    if question_type == 'multiple_choice':
+        # Multiple choice has 4 options and ImagePath
+        formatted.update({
+            'Option3': '',
+            'Option4': '',
+            'ImagePath': ''
+        })
+    elif question_type == 'true_false':
+        # True/false only has 2 options, no media path
+        pass  # Already has Option1, Option2
+    elif question_type == 'sound':
+        # Sound has 4 options and AudioPath
+        formatted.update({
+            'Option3': '',
+            'Option4': '',
+            'AudioPath': ''
+        })
 
     # Fill in options based on question type
     options = question.get('options', [])
-    for i, option in enumerate(options[:4], 1):  # Limit to 4 options max
+    max_options = 4 if question_type in ['multiple_choice', 'sound'] else 2
+    for i, option in enumerate(options[:max_options], 1):
         formatted[f'Option{i}'] = option.strip()
 
-    # Handle media paths - ensure proper formatting
-    if question.get('media_path'):
-        media_path = question['media_path']
-        # Ensure path starts with assets/ for consistency
-        if not media_path.startswith('assets/'):
-            if question.get('type') == 'sound':
-                media_path = f"assets/audio/{os.path.basename(media_path)}"
-            else:
-                media_path = f"assets/images/{os.path.basename(media_path)}"
-        
-        if question.get('type') == 'sound':
-            formatted['AudioPath'] = media_path
-        else:
-            formatted['ImagePath'] = media_path
+    # Handle media paths - ensure only filename is written to CSV
+    media_filename = question.get('media_filename')
+    if media_filename:
+        # Media filename should already be just the filename from MediaHandler
+        # Set the appropriate media path field based on question type
+        if question_type == 'sound' and 'AudioPath' in formatted:
+            formatted['AudioPath'] = media_filename
+        elif question_type == 'multiple_choice' and 'ImagePath' in formatted:
+            formatted['ImagePath'] = media_filename
 
     # Enhanced correct answer validation
     if formatted['CorrectAnswer']:
@@ -224,7 +283,9 @@ async def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='FunTrivia Quiz Scraper')
     parser.add_argument('--max-questions', type=int, help='Maximum number of questions to scrape')
-    parser.add_argument('--concurrency', type=int, help='Number of concurrent scrapers')
+    parser.add_argument('--concurrency', type=int, help='Number of concurrent scrapers (default: 3)')
+    parser.add_argument('--min-delay', type=float, help='Minimum delay between requests in seconds (default: 1)')
+    parser.add_argument('--max-delay', type=float, help='Maximum delay between requests in seconds (default: 3)')
     parser.add_argument('--categories', type=str, help='Comma-separated list of categories to scrape')
     parser.add_argument('--config', type=str, default='config/settings.json', help='Path to configuration file')
     parser.add_argument('--append', action='store_true', default=True, help='Append to existing CSV files (default)')
@@ -247,7 +308,31 @@ async def main():
     parser.add_argument('--strict-mapping', action='store_true',
                        help='Enable strict mapping mode - crash on unknown categories instead of using fallbacks')
     
+    # Google Sheets Integration Arguments
+    # By default, Google Sheets upload is DISABLED unless explicitly enabled via command line or config
+    parser.add_argument('--upload-to-sheets', action='store_true',
+                       help='Enable Google Sheets upload (disabled by default). Requires --sheets-credentials and --sheets-id')
+    parser.add_argument('--no-sheets-upload', action='store_true',
+                       help='Explicitly disable Google Sheets upload (overrides config file setting)')
+    parser.add_argument('--sheets-credentials', type=str,
+                       help='Path to Google Sheets service account credentials JSON file (e.g., credentials/service-account.json)')
+    parser.add_argument('--sheets-id', type=str,
+                       help='Google Spreadsheet ID (found in the spreadsheet URL)')
+    parser.add_argument('--sheets-test-only', action='store_true',
+                       help='Only test Google Sheets connection and exit (requires --sheets-credentials and --sheets-id)')
+    
     args = parser.parse_args()
+
+    # Handle Google Sheets testing mode
+    if args.sheets_test_only:
+        if not args.sheets_credentials or not args.sheets_id:
+            print("❌ Error: --sheets-test-only requires both --sheets-credentials and --sheets-id")
+            print("Usage: python src/main.py --sheets-test-only --sheets-credentials path/to/creds.json --sheets-id your_sheet_id")
+            return 1
+        
+        from utils.sheets import test_google_sheets_setup
+        success = test_google_sheets_setup(args.sheets_credentials, args.sheets_id)
+        return 0 if success else 1
 
     # Handle category collection mode
     if args.dump_categories_only:
@@ -268,6 +353,100 @@ async def main():
     except json.JSONDecodeError as e:
         print(f"Error parsing configuration file: {e}")
         return
+
+    # Configure Google Sheets settings based on command line arguments and config
+    sheets_enabled = False
+    sheets_config = {}
+    
+    if args.no_sheets_upload:
+        # Explicitly disabled via command line
+        sheets_enabled = False
+        print("📊 Google Sheets upload explicitly disabled via --no-sheets-upload")
+    elif args.upload_to_sheets:
+        # Explicitly enabled via command line - validate required arguments
+        if not args.sheets_credentials:
+            print("❌ Error: --upload-to-sheets requires --sheets-credentials")
+            print("Usage: python src/main.py --upload-to-sheets --sheets-credentials path/to/creds.json --sheets-id your_sheet_id")
+            return 1
+        if not args.sheets_id:
+            print("❌ Error: --upload-to-sheets requires --sheets-id")
+            print("Usage: python src/main.py --upload-to-sheets --sheets-credentials path/to/creds.json --sheets-id your_sheet_id")
+            return 1
+        
+        sheets_enabled = True
+        sheets_config = {
+            'enabled': True,
+            'credentials_file': args.sheets_credentials,
+            'spreadsheet_id': args.sheets_id
+        }
+        print(f"📊 Google Sheets upload enabled via command line")
+        print(f"   Credentials: {args.sheets_credentials}")
+        print(f"   Spreadsheet ID: {args.sheets_id}")
+    else:
+        # Check config file setting (default behavior)
+        config_sheets = config.get('google_sheets', {})
+        if config_sheets.get('enabled', False):
+            # Enabled in config - validate required fields
+            credentials_file = config_sheets.get('credentials_file', '')
+            spreadsheet_id = config_sheets.get('spreadsheet_id', '')
+            
+            if not credentials_file or not spreadsheet_id:
+                print("⚠️ Warning: Google Sheets enabled in config but missing credentials_file or spreadsheet_id")
+                print("   Disabling Google Sheets upload. To fix:")
+                print(f"   1. Set 'enabled': false in {args.config}")
+                print("   2. Or provide valid credentials_file and spreadsheet_id in config")
+                print("   3. Or use command line: --upload-to-sheets --sheets-credentials <file> --sheets-id <id>")
+                sheets_enabled = False
+            else:
+                sheets_enabled = True
+                sheets_config = config_sheets.copy()
+                print(f"📊 Google Sheets upload enabled via config file")
+        else:
+            print("📊 Google Sheets upload disabled (default). Use --upload-to-sheets to enable.")
+
+    # Update config with determined Google Sheets settings
+    config['google_sheets'] = sheets_config
+    config['google_sheets']['enabled'] = sheets_enabled
+
+    # Update config with command line arguments - Enhanced concurrency and delay configuration
+    if args.max_questions:
+        config['scraper']['max_questions_per_run'] = args.max_questions
+    if args.concurrency:
+        config['scraper']['concurrency'] = args.concurrency
+    if args.min_delay is not None:
+        if 'delays' not in config['scraper']:
+            config['scraper']['delays'] = {}
+        config['scraper']['delays']['min'] = args.min_delay
+    if args.max_delay is not None:
+        if 'delays' not in config['scraper']:
+            config['scraper']['delays'] = {}
+        config['scraper']['delays']['max'] = args.max_delay
+    if args.strict_mapping:
+        config['scraper']['strict_mapping'] = True
+
+    # Validate delay configuration
+    delay_config = config['scraper'].get('delays', {})
+    min_delay = delay_config.get('min', 1.0)
+    max_delay = delay_config.get('max', 3.0)
+    
+    if min_delay > max_delay:
+        print(f"❌ Error: Minimum delay ({min_delay}s) cannot be greater than maximum delay ({max_delay}s)")
+        return 1
+    if min_delay < 0:
+        print(f"❌ Error: Minimum delay cannot be negative ({min_delay}s)")
+        return 1
+    if max_delay < 0:
+        print(f"❌ Error: Maximum delay cannot be negative ({max_delay}s)")
+        return 1
+
+    # Validate concurrency configuration
+    concurrency = config['scraper'].get('concurrency', 3)
+    if concurrency < 1:
+        print(f"❌ Error: Concurrency must be at least 1 (got {concurrency})")
+        return 1
+    if concurrency > 20:
+        print(f"⚠️ Warning: High concurrency ({concurrency}) may cause rate limiting or IP blocking")
+        print("   Consider using lower concurrency (3-8) for safer scraping")
 
     # Ensure directories exist
     ensure_directories(config)
@@ -298,14 +477,6 @@ async def main():
         logger.warning("Resetting question indices to 0")
         indexer.reset_indices()
 
-    # Update config with command line arguments
-    if args.max_questions:
-        config['scraper']['max_questions_per_run'] = args.max_questions
-    if args.concurrency:
-        config['scraper']['concurrency'] = args.concurrency
-    if args.strict_mapping:
-        config['scraper']['strict_mapping'] = True
-
     # Run pre-scrape checks
     if not run_pre_scrape_checks(config, logger):
         logger.error("Pre-scrape checks failed - aborting")
@@ -317,6 +488,8 @@ async def main():
     logger.info("Starting FunTrivia scraper")
     logger.info(f"Configuration: max_questions={config['scraper']['max_questions_per_run']}, "
                 f"concurrency={config['scraper']['concurrency']}")
+    logger.info(f"Delay configuration: {min_delay}-{max_delay}s between requests")
+    logger.info(f"Rate limit: {config['scraper']['rate_limit']['requests_per_minute']} requests/minute")
     logger.info(f"Current indices: {indexer.get_all_indices()}")
     logger.info(f"Mode: {'Dry Run' if args.dry_run else 'Append' if not args.overwrite else 'Overwrite'}")
 
@@ -340,7 +513,8 @@ async def main():
 
         # Validate scraped data unless skipped
         if not args.skip_validation:
-            logger.info("Validating scraped data")
+            logger.info("Starting data validation")
+            logger.debug(f"Validating {len(questions)} questions...")
             validation_summary = validate_scraped_data(questions)
             print_validation_report(validation_summary)
             
@@ -356,8 +530,11 @@ async def main():
                 logger.warning(f"Removing {validation_summary['invalid_questions']} invalid questions")
                 # Note: In a real implementation, you'd filter out invalid questions here
                 # For now, we'll proceed with all questions
+            
+            logger.info(f"Validation completed: {validation_summary['valid_questions']} valid, {validation_summary['invalid_questions']} invalid, {validation_summary['questions_with_warnings']} with warnings")
 
         # Group questions by type
+        logger.info("Grouping questions by type")
         questions_by_type = {
             'multiple_choice': [],
             'true_false': [],
@@ -365,119 +542,299 @@ async def main():
         }
 
         for question in questions:
-            formatted_question = format_question_data_enhanced(question)
-            question_type = question.get('type', 'multiple_choice')
-            questions_by_type[question_type].append(formatted_question)
-            
-            # Record metrics
-            metrics.record_question_scraped(question_type)
+            try:
+                formatted_question = format_question_data_enhanced(question)
+                question_type = question.get('type', 'multiple_choice')
+                questions_by_type[question_type].append(formatted_question)
+                
+                # Record metrics
+                metrics.record_question_scraped(question_type)
+            except Exception as e:
+                logger.error(f"Error formatting question {question.get('id', 'unknown')}: {e}")
+                logger.debug("Question formatting error details:", exc_info=True)
+                # Continue with next question instead of failing
+                continue
 
         # Log question distribution
+        logger.info("Question type distribution:")
         for qtype, qlist in questions_by_type.items():
-            logger.info(f"Found {len(qlist)} {qtype} questions")
+            logger.info(f"  {qtype}: {len(qlist)} questions")
 
         # Handle dry run mode
         if args.dry_run:
+            logger.info("DRY RUN MODE - No data will be saved")
             print("\n🧪 DRY RUN MODE - No data will be saved")
             print("Question summary:")
             for qtype, qlist in questions_by_type.items():
                 print(f"  {qtype}: {len(qlist)} questions")
+            logger.info("Dry run completed successfully")
             return
 
         # Create backups if requested and overwriting
         if args.overwrite and args.backup:
             logger.info("Creating backups of existing CSV files")
+            backup_count = 0
             for question_type, csv_file in config['storage']['csv_files'].items():
-                csv_handler.backup_csv(csv_file)
+                try:
+                    csv_handler.backup_csv(csv_file)
+                    backup_count += 1
+                    logger.debug(f"Created backup for {csv_file}")
+                except Exception as e:
+                    logger.error(f"Failed to create backup for {csv_file}: {e}")
+            logger.info(f"Created {backup_count} CSV backups")
 
         # Save questions to CSV files
+        logger.info("Starting CSV file operations")
         csv_files = {}
         total_new_questions = 0
+        csv_operation_stats = {'successful': 0, 'failed': 0, 'skipped': 0}
         
         for question_type, type_questions in questions_by_type.items():
             if not type_questions:
-                logger.info(f"No {question_type} questions to save")
+                logger.info(f"No {question_type} questions to save - skipping")
+                csv_operation_stats['skipped'] += 1
                 continue
 
             csv_file = config['storage']['csv_files'][question_type]
             csv_files[question_type] = str(Path(config['storage']['output_dir']) / csv_file)
 
-            if args.overwrite:
-                # Overwrite mode - use pandas directly
-                df = pd.DataFrame(type_questions)
-                df = csv_handler.ensure_csv_structure(df, question_type)
-                df.to_csv(csv_files[question_type], index=False)
-                new_count = len(type_questions)
-                logger.info(f"Overwrote {csv_file} with {new_count} {question_type} questions")
-            else:
-                # Append mode - use CSV handler
-                new_count = csv_handler.append_to_csv(type_questions, csv_file, question_type)
-                logger.info(f"Added {new_count} new {question_type} questions to {csv_file}")
+            try:
+                if args.overwrite:
+                    # Overwrite mode - use pandas directly
+                    logger.info(f"Overwriting {csv_file} with {len(type_questions)} questions")
+                    df = pd.DataFrame(type_questions)
+                    df = csv_handler.ensure_csv_structure(df, question_type)
+                    df.to_csv(csv_files[question_type], index=False)
+                    new_count = len(type_questions)
+                    logger.info(f"Successfully overwrote {csv_file} with {new_count} {question_type} questions")
+                else:
+                    # Append mode - use CSV handler
+                    logger.info(f"Appending {len(type_questions)} questions to {csv_file}")
+                    new_count = csv_handler.append_to_csv(type_questions, csv_file, question_type)
+                    logger.info(f"Successfully added {new_count} new {question_type} questions to {csv_file}")
+                
+                total_new_questions += new_count
+                csv_operation_stats['successful'] += 1
+                
+                # Log sample of saved data for verification
+                if type_questions:
+                    sample_question = type_questions[0]
+                    logger.debug(f"Sample {question_type} question saved:")
+                    logger.debug(f"  Key: {sample_question.get('Key')}")
+                    logger.debug(f"  Question: {sample_question.get('Question', '')[:100]}...")
+                    logger.debug(f"  Correct Answer: {sample_question.get('CorrectAnswer')}")
+                    logger.debug(f"  Media: {sample_question.get('ImagePath') or sample_question.get('AudioPath') or 'None'}")
             
-            total_new_questions += new_count
-            
-            # Log sample of saved data for verification
-            if type_questions:
-                sample_question = type_questions[0]
-                logger.debug(f"Sample {question_type} question:")
-                logger.debug(f"  Key: {sample_question.get('Key')}")
-                logger.debug(f"  Question: {sample_question.get('Question', '')[:50]}...")
-                logger.debug(f"  Correct Answer: {sample_question.get('CorrectAnswer')}")
+            except Exception as e:
+                csv_operation_stats['failed'] += 1
+                logger.error(f"Failed to save {question_type} questions to {csv_file}: {e}")
+                logger.debug(f"CSV save error details for {question_type}:", exc_info=True)
+                # Continue with other question types instead of failing entirely
+
+        # Log CSV operation summary
+        logger.info("CSV operation summary:")
+        logger.info(f"  Successful: {csv_operation_stats['successful']} files")
+        logger.info(f"  Failed: {csv_operation_stats['failed']} files")
+        logger.info(f"  Skipped: {csv_operation_stats['skipped']} files")
+        logger.info(f"  Total new questions saved: {total_new_questions}")
 
         # Validate saved CSV files
         if total_new_questions > 0 and not args.skip_validation:
             logger.info("Validating saved CSV files")
-            validation_results = validate_csv_files(
-                config['storage']['output_dir'], 
-                config['storage']['csv_files']
-            )
-            
-            if not all(validation_results.values()):
-                logger.warning("Some CSV files failed validation")
-
-        # Upload to Google Sheets if enabled
-        if config.get('google_sheets', {}).get('enabled', False) and total_new_questions > 0:
             try:
-                logger.info("Uploading data to Google Sheets")
+                validation_results = validate_csv_files(
+                    config['storage']['output_dir'], 
+                    config['storage']['csv_files']
+                )
                 
-                credentials_file = config['google_sheets']['credentials_file']
-                spreadsheet_id = config['google_sheets']['spreadsheet_id']
-                
-                # Check if credentials file exists
-                if not os.path.exists(credentials_file):
-                    logger.error(f"Google Sheets credentials file not found: {credentials_file}")
+                all_valid = all(validation_results.values())
+                if all_valid:
+                    logger.info("All CSV files passed validation")
                 else:
+                    logger.warning("Some CSV files failed validation:")
+                    for file_type, is_valid in validation_results.items():
+                        if not is_valid:
+                            logger.warning(f"  {file_type}: FAILED")
+                        else:
+                            logger.debug(f"  {file_type}: PASSED")
+            except Exception as e:
+                logger.error(f"CSV validation failed: {e}")
+                logger.debug("CSV validation error details:", exc_info=True)
+
+        # Upload to Google Sheets if enabled and configured
+        sheets_upload_attempted = False
+        sheets_upload_successful = False
+        
+        if sheets_enabled and total_new_questions > 0:
+            try:
+                logger.info("Starting Google Sheets upload process")
+                
+                # Get credentials and spreadsheet info
+                credentials_file = sheets_config.get('credentials_file', '')
+                spreadsheet_id = sheets_config.get('spreadsheet_id', '')
+                
+                # Final validation before upload attempt
+                if not credentials_file or not spreadsheet_id:
+                    logger.warning("Google Sheets upload skipped: missing credentials_file or spreadsheet_id")
+                    print("⚠️ Google Sheets upload skipped: incomplete configuration")
+                elif not os.path.exists(credentials_file):
+                    logger.warning(f"Google Sheets upload skipped: credentials file not found: {credentials_file}")
+                    print(f"⚠️ Google Sheets upload skipped: credentials file not found: {credentials_file}")
+                else:
+                    sheets_upload_attempted = True
+                    logger.info(f"Uploading {total_new_questions} new questions to Google Sheets")
+                    logger.debug(f"Using credentials: {credentials_file}")
+                    logger.debug(f"Target spreadsheet: {spreadsheet_id}")
+                    print(f"📊 Uploading {total_new_questions} new questions to Google Sheets...")
+                    
                     uploader = GoogleSheetsUploader(
                         credentials_file=credentials_file,
                         spreadsheet_id=spreadsheet_id
                     )
                     
                     # Validate Google Sheets setup
+                    logger.debug("Validating Google Sheets setup...")
                     is_valid, message = uploader.validate_setup()
                     if not is_valid:
                         logger.error(f"Google Sheets validation failed: {message}")
+                        print(f"❌ Google Sheets validation failed: {message}")
+                        print("\nTroubleshooting steps:")
+                        print("1. Ensure Google Sheets API is enabled in Google Cloud Console")
+                        print("2. Verify credentials file is valid service account JSON")
+                        print("3. Check that spreadsheet is shared with service account email")
+                        print("4. Test connection with: python src/main.py --sheets-test-only --sheets-credentials <file> --sheets-id <id>")
                     else:
+                        logger.info("Google Sheets setup validation passed")
+                        
                         # Only upload files that have new questions
                         files_to_upload = {}
                         for question_type, file_path in csv_files.items():
                             if question_type in questions_by_type and questions_by_type[question_type]:
                                 files_to_upload[question_type] = file_path
+                                logger.debug(f"Will upload {question_type}: {file_path}")
                         
                         if files_to_upload:
+                            logger.info(f"Uploading {len(files_to_upload)} CSV files to Google Sheets")
                             uploader.upload_csv_files(files_to_upload)
+                            sheets_upload_successful = True
                             logger.info("Successfully uploaded data to Google Sheets")
+                            print("✅ Successfully uploaded data to Google Sheets")
                         else:
                             logger.info("No new data to upload to Google Sheets")
+                            print("ℹ️ No new data to upload to Google Sheets")
                     
             except Exception as e:
                 logger.error(f"Failed to upload to Google Sheets: {e}")
                 logger.debug("Google Sheets upload error details:", exc_info=True)
+                print(f"❌ Failed to upload to Google Sheets: {e}")
+                print("   Check the log file for detailed error information.")
+
+        elif sheets_enabled and total_new_questions == 0:
+            logger.info("Google Sheets upload skipped: no new questions to upload")
+            print("📊 Google Sheets upload skipped: no new questions to upload")
+        elif not sheets_enabled:
+            logger.debug("Google Sheets upload disabled")
 
         # Finalize metrics
         metrics.finalize_session()
 
+        # Clean up temporary media files and show media statistics
+        try:
+            temp_files_cleaned = scraper.media_handler.cleanup_temp_files()
+            if temp_files_cleaned > 0:
+                logger.info(f"Cleaned up {temp_files_cleaned} temporary media files")
+            
+            # Display media statistics
+            media_stats = scraper.media_handler.get_media_stats()
+            if media_stats['images']['count'] > 0 or media_stats['audio']['count'] > 0:
+                logger.info("Media files summary:")
+                logger.info(f"  Images: {media_stats['images']['count']} files ({media_stats['images']['total_size_mb']:.1f} MB)")
+                logger.info(f"  Audio: {media_stats['audio']['count']} files ({media_stats['audio']['total_size_mb']:.1f} MB)")
+                
+                print("\n" + "="*60)
+                print("MEDIA FILES SUMMARY")
+                print("="*60)
+                print(f"Images: {media_stats['images']['count']} files ({media_stats['images']['total_size_mb']:.1f} MB)")
+                print(f"  Directory: {media_stats['images']['directory']}")
+                print(f"Audio: {media_stats['audio']['count']} files ({media_stats['audio']['total_size_mb']:.1f} MB)")
+                print(f"  Directory: {media_stats['audio']['directory']}")
+                print("="*60)
+            else:
+                logger.debug("No media files were processed")
+        except Exception as e:
+            logger.error(f"Error processing media statistics: {e}")
+            logger.debug("Media statistics error details:", exc_info=True)
+
+        # Check for unmapped values and provide feedback
+        try:
+            unmapped_values = scraper.get_unmapped_values()
+            if any(unmapped_values.values()):
+                logger.warning("Unmapped values detected during scraping:")
+                for mapping_type, values in unmapped_values.items():
+                    if values:
+                        logger.warning(f"  {mapping_type.upper()}: {list(values)}")
+                
+                print("\n" + "="*60)
+                print("MAPPING FEEDBACK")
+                print("="*60)
+                print("The following values were encountered but not found in mappings:")
+                print("Consider adding them to config/mappings.json")
+                
+                for mapping_type, values in unmapped_values.items():
+                    if values:
+                        print(f"\n{mapping_type.upper()} MAPPING:")
+                        for value in sorted(values):
+                            print(f"  - '{value}'")
+                        
+                print(f"\nTo add these mappings, edit config/mappings.json and add the")
+                print(f"unmapped values to the appropriate mapping categories.")
+                print("="*60)
+            else:
+                logger.info("All values were successfully mapped")
+        except Exception as e:
+            logger.error(f"Error checking unmapped values: {e}")
+            logger.debug("Unmapped values check error details:", exc_info=True)
+
         # Print final summary
         final_indices = indexer.get_all_indices()
+        
+        logger.info("="*60)
+        logger.info("SCRAPING SESSION COMPLETED SUCCESSFULLY")
+        logger.info("="*60)
+        logger.info(f"Total new questions scraped: {total_new_questions}")
+        
+        for qtype, qlist in questions_by_type.items():
+            if qlist:
+                csv_file = config['storage']['csv_files'][qtype]
+                stats = csv_handler.get_csv_stats(csv_file)
+                logger.info(f"  {qtype.replace('_', ' ').title()}: {len(qlist)} new, {stats['total_questions']} total")
+        
+        logger.info(f"Question indices after run:")
+        for qtype, count in final_indices.items():
+            logger.info(f"  {qtype}: {count}")
+        
+        # Print performance metrics
+        current_stats = metrics.get_current_stats()
+        logger.info(f"Performance metrics:")
+        logger.info(f"  Duration: {current_stats['duration_seconds']/60:.1f} minutes")
+        logger.info(f"  Average rate: {current_stats['performance']['avg_questions_per_minute']:.1f} questions/min")
+        logger.info(f"  Peak memory: {current_stats['performance']['peak_memory_mb']:.1f} MB")
+        
+        # Google Sheets status reporting
+        if sheets_enabled:
+            if sheets_upload_attempted:
+                if sheets_upload_successful:
+                    logger.info("Google Sheets: Upload completed successfully")
+                else:
+                    logger.warning("Google Sheets: Upload attempted but failed")
+            else:
+                logger.warning("Google Sheets: Upload skipped due to configuration issues")
+        else:
+            logger.debug("Google Sheets: Disabled")
+        
+        logger.info(f"Mode: {'Overwrite' if args.overwrite else 'Append'}")
+        logger.info("="*60)
+
         print("\n" + "="*60)
         print("SCRAPING SUMMARY")
         print("="*60)
@@ -503,8 +860,17 @@ async def main():
         print(f"  Average rate: {current_stats['performance']['avg_questions_per_minute']:.1f} questions/min")
         print(f"  Peak memory: {current_stats['performance']['peak_memory_mb']:.1f} MB")
         
-        if config.get('google_sheets', {}).get('enabled', False):
-            print("Google Sheets: Upload completed" if total_new_questions > 0 else "Google Sheets: No new data to upload")
+        # Google Sheets status reporting
+        if sheets_enabled:
+            if sheets_upload_attempted:
+                if sheets_upload_successful:
+                    print("Google Sheets: Upload completed successfully")
+                else:
+                    print("Google Sheets: Upload attempted but failed")
+            else:
+                print("Google Sheets: Upload skipped (configuration issues)")
+        else:
+            print("Google Sheets: Disabled")
         
         print(f"Mode: {'Overwrite' if args.overwrite else 'Append'}")
         
@@ -522,17 +888,22 @@ async def main():
         print("\nScraping interrupted by user. Progress has been saved.")
         metrics.finalize_session()
     except Exception as e:
-        logger.error(f"An error occurred during scraping: {e}")
-        logger.debug("Full error details:", exc_info=True)
-        print(f"\nError occurred: {e}")
+        logger.error(f"Fatal error occurred during scraping: {e}")
+        logger.error("Full error details:", exc_info=True)
+        print(f"\nFatal error occurred: {e}")
         print("Check the log file for detailed error information.")
         metrics.record_error("scraping_error", str(e))
         metrics.finalize_session()
         raise
     finally:
         # Clean up
-        await scraper.close()
-        logger.info("Scraping completed")
+        try:
+            await scraper.close()
+            logger.info("Scraper cleanup completed")
+        except Exception as e:
+            logger.error(f"Error during scraper cleanup: {e}")
+            logger.debug("Cleanup error details:", exc_info=True)
+        logger.info("Main scraping process completed")
 
 if __name__ == '__main__':
     asyncio.run(main()) 

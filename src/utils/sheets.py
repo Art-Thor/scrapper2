@@ -1,12 +1,53 @@
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import pandas as pd
+"""
+Google Sheets Integration for FunTrivia Scraper
+
+USAGE EXAMPLES:
+
+1. Test Google Sheets connection:
+   python src/main.py --sheets-test-only --sheets-credentials credentials/service-account.json --sheets-id 1abc123def456
+
+2. Enable Google Sheets upload via command line (recommended):
+   python src/main.py --upload-to-sheets --sheets-credentials credentials/service-account.json --sheets-id 1abc123def456
+
+3. Enable Google Sheets upload via config file:
+   Edit config/settings.json:
+   {
+     "google_sheets": {
+       "enabled": true,
+       "credentials_file": "credentials/service-account.json", 
+       "spreadsheet_id": "1abc123def456"
+     }
+   }
+
+4. Explicitly disable Google Sheets (overrides config):
+   python src/main.py --no-sheets-upload
+
+SETUP REQUIREMENTS:
+- Google Cloud Project with Google Sheets API enabled
+- Service Account with credentials JSON file
+- Google Spreadsheet shared with service account email
+- Valid spreadsheet ID from the spreadsheet URL
+
+By default, Google Sheets upload is DISABLED for privacy and security.
+"""
+
+import gspread # type: ignore
+from oauth2client.service_account import ServiceAccountCredentials # type: ignore
+import pandas as pd # type: ignore
 from typing import Dict, Any, Tuple, Optional
 import logging
 import os
 import json
 
 class GoogleSheetsUploader:
+    """
+    Google Sheets uploader with comprehensive validation and error handling.
+    
+    This class handles uploading CSV data to Google Sheets with proper authentication,
+    validation, and graceful error handling. By design, it requires explicit setup
+    and will not attempt uploads without valid credentials and configuration.
+    """
+    
     def __init__(self, credentials_file: str, spreadsheet_id: str):
         self.logger = logging.getLogger(__name__)
         self.credentials_file = credentials_file
@@ -15,7 +56,18 @@ class GoogleSheetsUploader:
         self.spreadsheet = None
 
     def validate_setup(self) -> Tuple[bool, str]:
-        """Validate Google Sheets setup and return status with message."""
+        """
+        Comprehensive validation of Google Sheets setup.
+        
+        Checks:
+        - Credentials file exists and is valid JSON
+        - Required fields are present in credentials
+        - Service account authentication works
+        - Spreadsheet exists and is accessible
+        
+        Returns:
+            Tuple of (is_valid: bool, message: str)
+        """
         try:
             # Check if credentials file exists
             if not os.path.exists(self.credentials_file):
@@ -237,7 +289,12 @@ class GoogleSheetsUploader:
             raise
 
     def upload_csv_files(self, csv_files: Dict[str, str]) -> None:
-        """Upload multiple CSV files to their respective worksheets with progress tracking."""
+        """
+        Upload multiple CSV files to their respective worksheets with progress tracking.
+        
+        Args:
+            csv_files: Dictionary mapping question types to CSV file paths
+        """
         if not csv_files:
             self.logger.info("No CSV files to upload")
             return
@@ -245,6 +302,8 @@ class GoogleSheetsUploader:
         total_files = len(csv_files)
         successful_uploads = 0
         failed_uploads = []
+
+        self.logger.info(f"Starting upload of {total_files} CSV files to Google Sheets")
 
         for question_type, file_path in csv_files.items():
             try:
@@ -322,8 +381,80 @@ class GoogleSheetsUploader:
             self.logger.error(f"Error getting spreadsheet info: {e}")
             return None
 
+
+def print_setup_instructions():
+    """Print detailed Google Sheets setup instructions."""
+    instructions = """
+📊 GOOGLE SHEETS SETUP INSTRUCTIONS
+
+1. CREATE GOOGLE CLOUD PROJECT:
+   • Go to https://console.cloud.google.com/
+   • Create a new project or select an existing one
+   • Note your project ID
+
+2. ENABLE GOOGLE SHEETS API:
+   • Navigate to APIs & Services > Library
+   • Search for "Google Sheets API"
+   • Click on it and press "Enable"
+
+3. CREATE SERVICE ACCOUNT:
+   • Go to APIs & Services > Credentials
+   • Click "Create Credentials" > "Service Account"
+   • Fill in service account name (e.g., "funtrivia-scraper")
+   • Click "Create and Continue"
+   • Skip role assignment (click "Continue")
+   • Click "Done"
+
+4. GENERATE CREDENTIALS:
+   • Click on the service account you just created
+   • Go to "Keys" tab
+   • Click "Add Key" > "Create New Key"
+   • Select "JSON" format
+   • Download the JSON file
+
+5. SAVE CREDENTIALS:
+   • Create a credentials/ directory in your project
+   • Save the downloaded JSON as credentials/service-account.json
+   • Make sure the file is not publicly accessible
+
+6. CREATE GOOGLE SPREADSHEET:
+   • Go to https://sheets.google.com/
+   • Create a new spreadsheet
+   • Copy the spreadsheet ID from the URL:
+     https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
+
+7. SHARE SPREADSHEET:
+   • Open the JSON credentials file
+   • Copy the "client_email" value (service account email)
+   • In your spreadsheet, click "Share"
+   • Add the service account email with "Editor" permissions
+
+8. TEST CONNECTION:
+   python src/main.py --sheets-test-only --sheets-credentials credentials/service-account.json --sheets-id YOUR_SPREADSHEET_ID
+
+9. USE WITH SCRAPER:
+   python src/main.py --upload-to-sheets --sheets-credentials credentials/service-account.json --sheets-id YOUR_SPREADSHEET_ID
+
+SECURITY NOTES:
+• Never commit credentials files to version control
+• Add credentials/ to your .gitignore file
+• Use environment variables in production
+• Regularly rotate service account keys
+"""
+    print(instructions)
+
+
 def test_google_sheets_setup(credentials_file: str, spreadsheet_id: str) -> bool:
-    """Test Google Sheets setup and print detailed results."""
+    """
+    Test Google Sheets setup and print detailed results.
+    
+    Args:
+        credentials_file: Path to service account JSON file
+        spreadsheet_id: Google Spreadsheet ID
+        
+    Returns:
+        True if setup is valid, False otherwise
+    """
     print("🔍 Testing Google Sheets Setup")
     print("-" * 40)
     
@@ -339,20 +470,26 @@ def test_google_sheets_setup(credentials_file: str, spreadsheet_id: str) -> bool
         # Get additional info
         info = uploader.get_spreadsheet_info()
         if info:
-            print(f"\nSpreadsheet: {info['title']}")
-            print(f"URL: {info['url']}")
-            print(f"Worksheets: {len(info['worksheets'])}")
+            print(f"\nSpreadsheet Details:")
+            print(f"  Title: {info['title']}")
+            print(f"  URL: {info['url']}")
+            print(f"  Worksheets: {len(info['worksheets'])}")
             for ws in info['worksheets']:
-                print(f"  - {ws['title']} ({ws['row_count']}x{ws['col_count']})")
+                print(f"    • {ws['title']} ({ws['row_count']} rows × {ws['col_count']} cols)")
+        
+        print("\n✅ Google Sheets integration is ready to use!")
+        print("   Use --upload-to-sheets flag to enable uploads.")
         
         return True
     else:
         print("❌ Google Sheets setup failed!")
-        print(f"   {message}")
-        print("\nTroubleshooting steps:")
+        print(f"   Error: {message}")
+        print("\n🔧 Troubleshooting steps:")
         print("1. Ensure Google Sheets API is enabled in Google Cloud Console")
         print("2. Check that credentials file is valid service account JSON")
         print("3. Verify spreadsheet is shared with service account email")
         print("4. Confirm spreadsheet ID is correct")
+        print("\nFor detailed setup instructions, run:")
+        print("python -c \"from src.utils.sheets import print_setup_instructions; print_setup_instructions()\"")
         
         return False 

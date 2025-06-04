@@ -76,8 +76,17 @@ class DataValidator:
         return is_valid, errors, warnings
     
     def _validate_question_id(self, question_id: str) -> bool:
-        """Validate question ID format."""
-        pattern = r'^Question_(MQ|TF|SOUND)_Parsed_\d{4}$'
+        """
+        Validate question ID format using the new localization key pattern.
+        
+        Expected format: Question_{TYPE}_Parsed_{DOMAIN}_{DIFFICULTY}_{UNIQUEID}
+        Examples:
+        - Question_MQ_Parsed_Culture_Normal_0001
+        - Question_TF_Parsed_Science_Hard_0001
+        - Question_Sound_Parsed_Nature_Easy_0001
+        """
+        # Updated pattern to match new localization key format with domain and difficulty
+        pattern = r'^Question_(MQ|TF|Sound)_Parsed_[A-Za-z]+_[A-Za-z]+_\d{4}$'
         return bool(re.match(pattern, question_id))
     
     def _validate_question_text(self, question_text: str) -> Tuple[List[str], List[str]]:
@@ -298,16 +307,16 @@ class CSVTemplateValidator:
             'multiple_choice': [
                 'Key', 'Domain', 'Topic', 'Difficulty', 'Question',
                 'Option1', 'Option2', 'Option3', 'Option4', 
-                'CorrectAnswer', 'Hint', 'ImagePath'
+                'CorrectAnswer', 'Hint', 'Description', 'ImagePath'
             ],
             'true_false': [
                 'Key', 'Domain', 'Topic', 'Difficulty', 'Question',
-                'Option1', 'Option2', 'CorrectAnswer', 'Hint'
+                'Option1', 'Option2', 'CorrectAnswer', 'Hint', 'Description'
             ],
             'sound': [
                 'Key', 'Domain', 'Topic', 'Difficulty', 'Question',
                 'Option1', 'Option2', 'Option3', 'Option4',
-                'CorrectAnswer', 'Hint', 'AudioPath'
+                'CorrectAnswer', 'Hint', 'Description', 'AudioPath'
             ]
         }
         

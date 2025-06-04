@@ -40,8 +40,24 @@ class QuestionIndexer:
         except Exception as e:
             self.logger.error(f"Error saving indices file: {e}")
     
-    def get_next_id(self, question_type: str) -> str:
-        """Get the next question ID for the given type."""
+    def get_next_id(self, question_type: str, domain: str = None, difficulty: str = None) -> str:
+        """
+        Generate the next question ID for the given type using the new standardized format.
+        
+        New Format: Question_{TYPE}_Parsed_{DOMAIN}_{DIFFICULTY}_{UNIQUEID}
+        Examples:
+        - Question_MQ_Parsed_Culture_Normal_0001
+        - Question_TF_Parsed_Science_Hard_0001  
+        - Question_Sound_Parsed_Nature_Easy_0001
+        
+        Args:
+            question_type: Type of question ('multiple_choice', 'true_false', 'sound')
+            domain: Mapped domain value (e.g., 'Culture', 'Science', 'Nature')
+            difficulty: Mapped difficulty value (e.g., 'Easy', 'Normal', 'Hard')
+            
+        Returns:
+            Formatted question ID string following the new localization key format
+        """
         if question_type not in self.indices:
             self.indices[question_type] = 0
         
@@ -51,15 +67,24 @@ class QuestionIndexer:
         # Save immediately to prevent loss on crashes
         self._save_indices()
         
-        # Format the ID based on question type
+        # Map question type to prefix for the new localization key format
         type_prefix = {
             "multiple_choice": "MQ",
             "true_false": "TF", 
-            "sound": "SOUND"
+            "sound": "Sound"  # Changed from "SOUND" to "Sound" to match user requirements
         }.get(question_type, "MQ")
         
-        question_id = f"Question_{type_prefix}_Parsed_{current_id:04d}"
-        self.logger.debug(f"Generated ID {question_id} for type {question_type}")
+        # Generate question ID using the new localization key format
+        # Format: Question_{TYPE}_Parsed_{DOMAIN}_{DIFFICULTY}_{UNIQUEID}
+        if domain and difficulty:
+            # New format with domain and difficulty
+            question_id = f"Question_{type_prefix}_Parsed_{domain}_{difficulty}_{current_id:04d}"
+        else:
+            # Fallback to old format if domain/difficulty not provided (for backwards compatibility)
+            question_id = f"Question_{type_prefix}_Parsed_{current_id:04d}"
+            self.logger.warning(f"Generated question ID without domain/difficulty for {question_type}: {question_id}")
+        
+        self.logger.debug(f"Generated localization key {question_id} for type {question_type}")
         
         return question_id
     
