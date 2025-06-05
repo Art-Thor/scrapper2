@@ -1394,13 +1394,17 @@ class FunTriviaScraper(BaseScraper):
         return self.scraper_config.get_unmapped_values()
     
     def get_mapping_stats(self) -> Dict[str, Dict[str, int]]:
-        """
-        Get statistics about the loaded mappings.
-        
-        Returns:
-            Dictionary with counts and statistics for each mapping type
-        """
+        """Get statistics about mapping usage."""
         return self.scraper_config.get_mapping_stats()
+
+    async def download_media(self, url: str, media_type: str, question_id: str) -> str:
+        """Download media (image/audio) and return the local path."""
+        try:
+            media_ref = MediaReference(url=url, media_type=media_type, question_id=question_id)
+            return await self.media_handler.download_media(media_ref)
+        except Exception as e:
+            self.logger.error(f"Failed to download media for question {question_id}: {e}")
+            return ""
 
     async def _extract_photo_quiz_questions(self, page: Page) -> List[Dict[str, Any]]:
         """Extract questions from Photo Quiz format with image handling."""

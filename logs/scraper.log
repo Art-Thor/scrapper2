@@ -156,3 +156,61 @@
 2025-06-04 18:38:57,060 - FunTriviaScraper - WARNING - No questions found on quiz page: https://www.funtrivia.com/quiz/world/the-supremes-411423.html
 2025-06-04 18:38:57,098 - FunTriviaScraper - INFO - Browser closed successfully
 2025-06-04 18:38:57,098 - FunTriviaScraper - INFO - Final question indices: {'multiple_choice': 8662, 'true_false': 0, 'sound': 0}
+2025-06-05 10:55:27,462 - FunTriviaScraper - INFO - [_setup_logger:74] - Logger initialized for FunTriviaScraper
+2025-06-05 10:55:27,462 - FunTriviaScraper - DEBUG - [_setup_logger:75] - Log level: DEBUG
+2025-06-05 10:55:27,462 - FunTriviaScraper - DEBUG - [_setup_logger:76] - Log file: logs/scraper.log
+2025-06-05 10:55:30,746 - FunTriviaScraper - INFO - [initialize:65] - Scraper initialized successfully
+2025-06-05 10:55:30,749 - FunTriviaScraper - INFO - [initialize:66] - Current question indices: {'multiple_choice': 8662, 'true_false': 0, 'sound': 0}
+2025-06-05 10:55:30,863 - FunTriviaScraper - DEBUG - [_get_categories:513] - Fetching main categories page
+2025-06-05 10:55:34,420 - FunTriviaScraper - INFO - [_get_categories:528] - Successfully discovered 90 unique categories
+2025-06-05 10:55:34,476 - FunTriviaScraper - DEBUG - [_get_quiz_links:554] - Fetching quiz links from category: thematic_tools.html
+2025-06-05 10:55:38,937 - FunTriviaScraper - DEBUG - [_get_quiz_links:567] - Found 2 unique quiz links in category thematic_tools.html
+2025-06-05 10:55:39,011 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [hooking-up-342087.html] Starting quiz scraping process
+2025-06-05 10:55:39,011 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [hooking-up-342087.html] Navigating to quiz URL
+2025-06-05 10:55:42,656 - FunTriviaScraper - DEBUG - [_scrape_quiz:226] - [hooking-up-342087.html] Page loaded successfully
+2025-06-05 10:55:42,662 - FunTriviaScraper - DEBUG - [_get_quiz_difficulty:632] - Detected difficulty: Normal
+2025-06-05 10:55:42,666 - FunTriviaScraper - DEBUG - [_get_quiz_domain:742] - Detected domain: Culture
+2025-06-05 10:55:42,669 - FunTriviaScraper - DEBUG - [_get_quiz_topic:866] - Error getting topic: SyntaxError: Invalid regular expression: missing /
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 10:55:42,670 - FunTriviaScraper - DEBUG - [_extract_quiz_metadata:587] - Extracted quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'General'}
+2025-06-05 10:55:42,670 - FunTriviaScraper - DEBUG - [_scrape_quiz:230] - [hooking-up-342087.html] Extracted metadata: domain=Culture, topic=General, difficulty=Normal
+2025-06-05 10:55:42,674 - FunTriviaScraper - DEBUG - [_detect_quiz_type:968] - Detected quiz type: Photo Quiz
+2025-06-05 10:55:42,674 - FunTriviaScraper - INFO - [_scrape_quiz:234] - [hooking-up-342087.html] Quiz type detected: Photo Quiz
+2025-06-05 10:55:42,708 - FunTriviaScraper - INFO - [_ensure_quiz_started:1009] - No start button found - quiz may already be started
+2025-06-05 10:55:42,709 - FunTriviaScraper - DEBUG - [_scrape_quiz:244] - [hooking-up-342087.html] Starting quiz play-through process
+2025-06-05 10:55:42,712 - FunTriviaScraper - INFO - [_extract_photo_quiz_questions:1473] - Extracted 20 photo quiz questions
+2025-06-05 10:55:42,712 - FunTriviaScraper - INFO - [_play_through_complete_quiz:1041] - Extracted 20 questions from quiz page(s)
+2025-06-05 10:56:12,720 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q1: Timeout 30000ms exceeded.
+2025-06-05 10:56:42,731 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q1: Timeout 30000ms exceeded.
+2025-06-05 10:56:42,742 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 1
+2025-06-05 10:57:12,751 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q2: Timeout 30000ms exceeded.
+2025-06-05 10:57:42,769 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q2: Timeout 30000ms exceeded.
+2025-06-05 10:57:42,781 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 2
+2025-06-05 10:58:12,789 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q3: Timeout 30000ms exceeded.
+2025-06-05 10:58:42,799 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q3: Timeout 30000ms exceeded.
+2025-06-05 10:58:42,809 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 3
+2025-06-05 10:59:12,820 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q4: Timeout 30000ms exceeded.
+2025-06-05 10:59:42,845 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q4: Timeout 30000ms exceeded.
+2025-06-05 10:59:42,855 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 4
+2025-06-05 11:00:12,863 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q5: Timeout 30000ms exceeded.
+2025-06-05 11:00:42,879 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q5: Timeout 30000ms exceeded.
+2025-06-05 11:00:42,888 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 5
+2025-06-05 11:01:12,893 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q6: Timeout 30000ms exceeded.
+2025-06-05 11:01:42,916 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q6: Timeout 30000ms exceeded.
+2025-06-05 11:01:42,926 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 6
+2025-06-05 11:02:12,936 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q7: Timeout 30000ms exceeded.
+2025-06-05 11:02:42,952 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q7: Timeout 30000ms exceeded.
+2025-06-05 11:02:42,960 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 7
+2025-06-05 11:03:12,967 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q8: Timeout 30000ms exceeded.
+2025-06-05 11:03:42,981 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q8: Timeout 30000ms exceeded.
+2025-06-05 11:03:42,998 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 8
+2025-06-05 11:04:13,008 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q9: Timeout 30000ms exceeded.
+2025-06-05 11:04:43,021 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q9: Timeout 30000ms exceeded.
+2025-06-05 11:04:43,033 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 9
+2025-06-05 11:05:13,041 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q10: Timeout 30000ms exceeded.
+2025-06-05 11:05:43,052 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q10: Timeout 30000ms exceeded.
+2025-06-05 11:05:43,067 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 10
+2025-06-05 11:06:13,076 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q1: Timeout 30000ms exceeded.
+2025-06-05 11:06:13,091 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 1
