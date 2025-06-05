@@ -214,3 +214,536 @@
 2025-06-05 11:05:43,067 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 10
 2025-06-05 11:06:13,076 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1095] - Failed to select answer with pattern q1: Timeout 30000ms exceeded.
 2025-06-05 11:06:13,091 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1099] - Could not select answer for question 1
+2025-06-05 19:00:37,647 - FunTriviaScraper - INFO - [_setup_logger:74] - Logger initialized for FunTriviaScraper
+2025-06-05 19:00:37,647 - FunTriviaScraper - DEBUG - [_setup_logger:75] - Log level: DEBUG
+2025-06-05 19:00:37,647 - FunTriviaScraper - DEBUG - [_setup_logger:76] - Log file: logs/scraper.log
+2025-06-05 19:00:38,495 - FunTriviaScraper - INFO - [initialize:65] - Scraper initialized successfully
+2025-06-05 19:00:38,497 - FunTriviaScraper - INFO - [initialize:66] - Current question indices: {'multiple_choice': 8662, 'true_false': 0, 'sound': 0}
+2025-06-05 19:00:38,693 - FunTriviaScraper - DEBUG - [_get_categories:513] - Fetching main categories page
+2025-06-05 19:00:41,049 - FunTriviaScraper - INFO - [_get_categories:528] - Successfully discovered 90 unique categories
+2025-06-05 19:00:41,116 - FunTriviaScraper - DEBUG - [_get_quiz_links:554] - Fetching quiz links from category: index.html
+2025-06-05 19:00:48,228 - FunTriviaScraper - DEBUG - [_get_quiz_links:567] - Found 15 unique quiz links in category index.html
+2025-06-05 19:00:48,301 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [the-misplaced-teams-instrument] Starting quiz scraping process
+2025-06-05 19:00:48,302 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [the-misplaced-teams-instrument] Navigating to quiz URL
+2025-06-05 19:00:52,729 - FunTriviaScraper - DEBUG - [_scrape_quiz:226] - [the-misplaced-teams-instrument] Page loaded successfully
+2025-06-05 19:00:52,733 - FunTriviaScraper - DEBUG - [_get_quiz_difficulty:632] - Detected difficulty: Normal
+2025-06-05 19:00:52,736 - FunTriviaScraper - WARNING - [_get_quiz_domain:759] - Error parsing breadcrumbs for domain: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:00:52,736 - FunTriviaScraper - DEBUG - [_get_quiz_domain:760] - Domain extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 650, in _get_quiz_domain
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:00:52,740 - FunTriviaScraper - WARNING - [_get_quiz_topic:905] - Error parsing breadcrumbs for topic: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:00:52,740 - FunTriviaScraper - DEBUG - [_get_quiz_topic:906] - Topic extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 775, in _get_quiz_topic
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:00:52,740 - FunTriviaScraper - DEBUG - [_extract_quiz_metadata:587] - Extracted quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'General'}
+2025-06-05 19:00:52,740 - FunTriviaScraper - DEBUG - [_scrape_quiz:230] - [the-misplaced-teams-instrument] Extracted metadata: domain=Culture, topic=General, difficulty=Normal
+2025-06-05 19:00:52,743 - FunTriviaScraper - DEBUG - [_detect_quiz_type:1008] - Detected quiz type: Audio Quiz
+2025-06-05 19:00:52,744 - FunTriviaScraper - INFO - [_scrape_quiz:234] - [the-misplaced-teams-instrument] Quiz type detected: Audio Quiz
+2025-06-05 19:00:52,777 - FunTriviaScraper - INFO - [_ensure_quiz_started:1049] - No start button found - quiz may already be started
+2025-06-05 19:00:52,777 - FunTriviaScraper - DEBUG - [_scrape_quiz:244] - [the-misplaced-teams-instrument] Starting quiz play-through process
+2025-06-05 19:00:52,777 - FunTriviaScraper - ERROR - [_play_through_complete_quiz:1099] - Error playing through quiz: 'FunTriviaScraper' object has no attribute '_extract_audio_quiz_questions'
+2025-06-05 19:00:52,777 - FunTriviaScraper - WARNING - [_scrape_quiz:248] - [the-misplaced-teams-instrument] No questions extracted from quiz
+2025-06-05 19:00:52,790 - FunTriviaScraper - DEBUG - [_scrape_quiz:281] - [the-misplaced-teams-instrument] Browser context closed
+2025-06-05 19:00:52,815 - FunTriviaScraper - INFO - [close:76] - Browser closed successfully
+2025-06-05 19:00:52,815 - FunTriviaScraper - INFO - [close:77] - Final question indices: {'multiple_choice': 8662, 'true_false': 0, 'sound': 0}
+2025-06-05 19:02:08,324 - FunTriviaScraper - INFO - [_setup_logger:74] - Logger initialized for FunTriviaScraper
+2025-06-05 19:02:08,324 - FunTriviaScraper - DEBUG - [_setup_logger:75] - Log level: DEBUG
+2025-06-05 19:02:08,324 - FunTriviaScraper - DEBUG - [_setup_logger:76] - Log file: logs/scraper.log
+2025-06-05 19:02:09,020 - FunTriviaScraper - INFO - [initialize:65] - Scraper initialized successfully
+2025-06-05 19:02:09,021 - FunTriviaScraper - INFO - [initialize:66] - Current question indices: {'multiple_choice': 8662, 'true_false': 0, 'sound': 0}
+2025-06-05 19:02:09,222 - FunTriviaScraper - DEBUG - [_get_categories:513] - Fetching main categories page
+2025-06-05 19:02:11,483 - FunTriviaScraper - INFO - [_get_categories:528] - Successfully discovered 89 unique categories
+2025-06-05 19:02:11,543 - FunTriviaScraper - DEBUG - [_get_quiz_links:554] - Fetching quiz links from category: rainbow_mixture.html
+2025-06-05 19:02:17,715 - FunTriviaScraper - DEBUG - [_get_quiz_links:567] - Found 12 unique quiz links in category rainbow_mixture.html
+2025-06-05 19:02:17,853 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [colours-from-the-plant-kingdom] Starting quiz scraping process
+2025-06-05 19:02:17,853 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [colours-from-the-plant-kingdom] Navigating to quiz URL
+2025-06-05 19:02:22,564 - FunTriviaScraper - DEBUG - [_scrape_quiz:226] - [colours-from-the-plant-kingdom] Page loaded successfully
+2025-06-05 19:02:22,568 - FunTriviaScraper - DEBUG - [_get_quiz_difficulty:632] - Detected difficulty: Normal
+2025-06-05 19:02:22,575 - FunTriviaScraper - WARNING - [_get_quiz_domain:759] - Error parsing breadcrumbs for domain: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:02:22,575 - FunTriviaScraper - DEBUG - [_get_quiz_domain:760] - Domain extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 650, in _get_quiz_domain
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:02:22,579 - FunTriviaScraper - WARNING - [_get_quiz_topic:905] - Error parsing breadcrumbs for topic: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:02:22,580 - FunTriviaScraper - DEBUG - [_get_quiz_topic:906] - Topic extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 775, in _get_quiz_topic
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:02:22,580 - FunTriviaScraper - DEBUG - [_extract_quiz_metadata:587] - Extracted quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'General'}
+2025-06-05 19:02:22,580 - FunTriviaScraper - DEBUG - [_scrape_quiz:230] - [colours-from-the-plant-kingdom] Extracted metadata: domain=Culture, topic=General, difficulty=Normal
+2025-06-05 19:02:22,583 - FunTriviaScraper - DEBUG - [_detect_quiz_type:1008] - Detected quiz type: Match Quiz
+2025-06-05 19:02:22,583 - FunTriviaScraper - INFO - [_scrape_quiz:234] - [colours-from-the-plant-kingdom] Quiz type detected: Match Quiz
+2025-06-05 19:02:22,584 - FunTriviaScraper - INFO - [_scrape_quiz:237] - [colours-from-the-plant-kingdom] Skipping incompatible quiz type: Match Quiz
+2025-06-05 19:02:22,602 - FunTriviaScraper - DEBUG - [_scrape_quiz:281] - [colours-from-the-plant-kingdom] Browser context closed
+2025-06-05 19:02:22,634 - FunTriviaScraper - INFO - [close:76] - Browser closed successfully
+2025-06-05 19:02:22,634 - FunTriviaScraper - INFO - [close:77] - Final question indices: {'multiple_choice': 8662, 'true_false': 0, 'sound': 0}
+2025-06-05 19:03:09,151 - FunTriviaScraper - INFO - [_setup_logger:74] - Logger initialized for FunTriviaScraper
+2025-06-05 19:03:09,151 - FunTriviaScraper - DEBUG - [_setup_logger:75] - Log level: DEBUG
+2025-06-05 19:03:09,151 - FunTriviaScraper - DEBUG - [_setup_logger:76] - Log file: logs/scraper.log
+2025-06-05 19:03:09,561 - FunTriviaScraper - INFO - [initialize:65] - Scraper initialized successfully
+2025-06-05 19:03:09,565 - FunTriviaScraper - INFO - [initialize:66] - Current question indices: {'multiple_choice': 8662, 'true_false': 0, 'sound': 0}
+2025-06-05 19:03:09,619 - FunTriviaScraper - DEBUG - [_get_categories:513] - Fetching main categories page
+2025-06-05 19:03:11,933 - FunTriviaScraper - INFO - [_get_categories:528] - Successfully discovered 89 unique categories
+2025-06-05 19:03:11,996 - FunTriviaScraper - DEBUG - [_get_quiz_links:554] - Fetching quiz links from category: dog_training.html
+2025-06-05 19:03:17,548 - FunTriviaScraper - DEBUG - [_get_quiz_links:567] - Found 1 unique quiz links in category dog_training.html
+2025-06-05 19:03:17,614 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [canine-rally-o-251909.html] Starting quiz scraping process
+2025-06-05 19:03:17,621 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [canine-rally-o-251909.html] Navigating to quiz URL
+2025-06-05 19:03:50,259 - FunTriviaScraper - ERROR - [_scrape_quiz:268] - [canine-rally-o-251909.html] Timeout error: Timeout 30000ms exceeded.
+2025-06-05 19:03:50,274 - FunTriviaScraper - DEBUG - [_scrape_quiz:281] - [canine-rally-o-251909.html] Browser context closed
+2025-06-05 19:03:50,332 - FunTriviaScraper - DEBUG - [_get_quiz_links:554] - Fetching quiz links from category: index.html
+2025-06-05 19:03:54,874 - FunTriviaScraper - DEBUG - [_get_quiz_links:567] - Found 19 unique quiz links in category index.html
+2025-06-05 19:03:54,957 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [intro-to-the-olympics-419528.h] Starting quiz scraping process
+2025-06-05 19:03:54,957 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [intro-to-the-olympics-419528.h] Navigating to quiz URL
+2025-06-05 19:03:58,423 - FunTriviaScraper - DEBUG - [_scrape_quiz:226] - [intro-to-the-olympics-419528.h] Page loaded successfully
+2025-06-05 19:03:58,426 - FunTriviaScraper - DEBUG - [_get_quiz_difficulty:632] - Detected difficulty: Normal
+2025-06-05 19:03:58,428 - FunTriviaScraper - WARNING - [_get_quiz_domain:759] - Error parsing breadcrumbs for domain: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:03:58,428 - FunTriviaScraper - DEBUG - [_get_quiz_domain:760] - Domain extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 650, in _get_quiz_domain
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:03:58,430 - FunTriviaScraper - WARNING - [_get_quiz_topic:905] - Error parsing breadcrumbs for topic: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:03:58,430 - FunTriviaScraper - DEBUG - [_get_quiz_topic:906] - Topic extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 775, in _get_quiz_topic
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:03:58,431 - FunTriviaScraper - DEBUG - [_extract_quiz_metadata:587] - Extracted quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'General'}
+2025-06-05 19:03:58,431 - FunTriviaScraper - DEBUG - [_scrape_quiz:230] - [intro-to-the-olympics-419528.h] Extracted metadata: domain=Culture, topic=General, difficulty=Normal
+2025-06-05 19:03:58,433 - FunTriviaScraper - DEBUG - [_detect_quiz_type:1008] - Detected quiz type: Match Quiz
+2025-06-05 19:03:58,433 - FunTriviaScraper - INFO - [_scrape_quiz:234] - [intro-to-the-olympics-419528.h] Quiz type detected: Match Quiz
+2025-06-05 19:03:58,434 - FunTriviaScraper - INFO - [_scrape_quiz:237] - [intro-to-the-olympics-419528.h] Skipping incompatible quiz type: Match Quiz
+2025-06-05 19:03:58,447 - FunTriviaScraper - DEBUG - [_scrape_quiz:281] - [intro-to-the-olympics-419528.h] Browser context closed
+2025-06-05 19:03:58,499 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [nhl-team-anagrams-1-258481.htm] Starting quiz scraping process
+2025-06-05 19:03:58,958 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [nhl-team-anagrams-1-258481.htm] Navigating to quiz URL
+2025-06-05 19:04:02,644 - FunTriviaScraper - DEBUG - [_scrape_quiz:226] - [nhl-team-anagrams-1-258481.htm] Page loaded successfully
+2025-06-05 19:04:02,649 - FunTriviaScraper - DEBUG - [_get_quiz_difficulty:632] - Detected difficulty: Easy
+2025-06-05 19:04:02,651 - FunTriviaScraper - WARNING - [_get_quiz_domain:759] - Error parsing breadcrumbs for domain: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:02,651 - FunTriviaScraper - DEBUG - [_get_quiz_domain:760] - Domain extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 650, in _get_quiz_domain
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:02,653 - FunTriviaScraper - WARNING - [_get_quiz_topic:905] - Error parsing breadcrumbs for topic: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:02,653 - FunTriviaScraper - DEBUG - [_get_quiz_topic:906] - Topic extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 775, in _get_quiz_topic
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:02,654 - FunTriviaScraper - DEBUG - [_extract_quiz_metadata:587] - Extracted quiz metadata: {'difficulty': 'Easy', 'domain': 'Culture', 'topic': 'General'}
+2025-06-05 19:04:02,654 - FunTriviaScraper - DEBUG - [_scrape_quiz:230] - [nhl-team-anagrams-1-258481.htm] Extracted metadata: domain=Culture, topic=General, difficulty=Easy
+2025-06-05 19:04:02,657 - FunTriviaScraper - DEBUG - [_detect_quiz_type:1008] - Detected quiz type: Photo Quiz
+2025-06-05 19:04:02,658 - FunTriviaScraper - INFO - [_scrape_quiz:234] - [nhl-team-anagrams-1-258481.htm] Quiz type detected: Photo Quiz
+2025-06-05 19:04:02,686 - FunTriviaScraper - INFO - [_ensure_quiz_started:1049] - No start button found - quiz may already be started
+2025-06-05 19:04:02,686 - FunTriviaScraper - DEBUG - [_scrape_quiz:244] - [nhl-team-anagrams-1-258481.htm] Starting quiz play-through process
+2025-06-05 19:04:02,689 - FunTriviaScraper - INFO - [_extract_photo_quiz_questions:2010] - Extracted 0 photo quiz questions
+2025-06-05 19:04:02,689 - FunTriviaScraper - WARNING - [_play_through_complete_quiz:1077] - No questions found on quiz page
+2025-06-05 19:04:02,689 - FunTriviaScraper - WARNING - [_scrape_quiz:248] - [nhl-team-anagrams-1-258481.htm] No questions extracted from quiz
+2025-06-05 19:04:02,699 - FunTriviaScraper - DEBUG - [_scrape_quiz:281] - [nhl-team-anagrams-1-258481.htm] Browser context closed
+2025-06-05 19:04:02,749 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [newsmakers-of-nascar-2022-4110] Starting quiz scraping process
+2025-06-05 19:04:02,959 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [newsmakers-of-nascar-2022-4110] Navigating to quiz URL
+2025-06-05 19:04:07,228 - FunTriviaScraper - DEBUG - [_scrape_quiz:226] - [newsmakers-of-nascar-2022-4110] Page loaded successfully
+2025-06-05 19:04:07,231 - FunTriviaScraper - DEBUG - [_get_quiz_difficulty:632] - Detected difficulty: Normal
+2025-06-05 19:04:07,233 - FunTriviaScraper - WARNING - [_get_quiz_domain:759] - Error parsing breadcrumbs for domain: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:07,233 - FunTriviaScraper - DEBUG - [_get_quiz_domain:760] - Domain extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 650, in _get_quiz_domain
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:07,235 - FunTriviaScraper - WARNING - [_get_quiz_topic:905] - Error parsing breadcrumbs for topic: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:07,235 - FunTriviaScraper - DEBUG - [_get_quiz_topic:906] - Topic extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 775, in _get_quiz_topic
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:07,236 - FunTriviaScraper - DEBUG - [_extract_quiz_metadata:587] - Extracted quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'General'}
+2025-06-05 19:04:07,236 - FunTriviaScraper - DEBUG - [_scrape_quiz:230] - [newsmakers-of-nascar-2022-4110] Extracted metadata: domain=Culture, topic=General, difficulty=Normal
+2025-06-05 19:04:07,239 - FunTriviaScraper - DEBUG - [_detect_quiz_type:1008] - Detected quiz type: Match Quiz
+2025-06-05 19:04:07,239 - FunTriviaScraper - INFO - [_scrape_quiz:234] - [newsmakers-of-nascar-2022-4110] Quiz type detected: Match Quiz
+2025-06-05 19:04:07,239 - FunTriviaScraper - INFO - [_scrape_quiz:237] - [newsmakers-of-nascar-2022-4110] Skipping incompatible quiz type: Match Quiz
+2025-06-05 19:04:07,258 - FunTriviaScraper - DEBUG - [_scrape_quiz:281] - [newsmakers-of-nascar-2022-4110] Browser context closed
+2025-06-05 19:04:07,313 - FunTriviaScraper - DEBUG - [_get_quiz_links:554] - Fetching quiz links from category: geology.html
+2025-06-05 19:04:11,039 - FunTriviaScraper - DEBUG - [_get_quiz_links:567] - Found 5 unique quiz links in category geology.html
+2025-06-05 19:04:11,113 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [please-be-gneiss-411823.html] Starting quiz scraping process
+2025-06-05 19:04:11,314 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [please-be-gneiss-411823.html] Navigating to quiz URL
+2025-06-05 19:04:15,715 - FunTriviaScraper - DEBUG - [_scrape_quiz:226] - [please-be-gneiss-411823.html] Page loaded successfully
+2025-06-05 19:04:15,719 - FunTriviaScraper - DEBUG - [_get_quiz_difficulty:632] - Detected difficulty: Normal
+2025-06-05 19:04:15,721 - FunTriviaScraper - WARNING - [_get_quiz_domain:759] - Error parsing breadcrumbs for domain: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:15,721 - FunTriviaScraper - DEBUG - [_get_quiz_domain:760] - Domain extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 650, in _get_quiz_domain
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:15,723 - FunTriviaScraper - WARNING - [_get_quiz_topic:905] - Error parsing breadcrumbs for topic: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:15,723 - FunTriviaScraper - DEBUG - [_get_quiz_topic:906] - Topic extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 775, in _get_quiz_topic
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:15,724 - FunTriviaScraper - DEBUG - [_extract_quiz_metadata:587] - Extracted quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'General'}
+2025-06-05 19:04:15,724 - FunTriviaScraper - DEBUG - [_scrape_quiz:230] - [please-be-gneiss-411823.html] Extracted metadata: domain=Culture, topic=General, difficulty=Normal
+2025-06-05 19:04:15,727 - FunTriviaScraper - DEBUG - [_detect_quiz_type:1008] - Detected quiz type: Classification Quiz
+2025-06-05 19:04:15,727 - FunTriviaScraper - INFO - [_scrape_quiz:234] - [please-be-gneiss-411823.html] Quiz type detected: Classification Quiz
+2025-06-05 19:04:15,727 - FunTriviaScraper - INFO - [_scrape_quiz:237] - [please-be-gneiss-411823.html] Skipping incompatible quiz type: Classification Quiz
+2025-06-05 19:04:15,745 - FunTriviaScraper - DEBUG - [_scrape_quiz:281] - [please-be-gneiss-411823.html] Browser context closed
+2025-06-05 19:04:15,801 - FunTriviaScraper - DEBUG - [_scrape_quiz:219] - [canadian-mineral-deposit-geolo] Starting quiz scraping process
+2025-06-05 19:04:15,801 - FunTriviaScraper - DEBUG - [_scrape_quiz:223] - [canadian-mineral-deposit-geolo] Navigating to quiz URL
+2025-06-05 19:04:19,603 - FunTriviaScraper - DEBUG - [_scrape_quiz:226] - [canadian-mineral-deposit-geolo] Page loaded successfully
+2025-06-05 19:04:19,606 - FunTriviaScraper - DEBUG - [_get_quiz_difficulty:632] - Detected difficulty: Normal
+2025-06-05 19:04:19,608 - FunTriviaScraper - WARNING - [_get_quiz_domain:759] - Error parsing breadcrumbs for domain: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:19,608 - FunTriviaScraper - DEBUG - [_get_quiz_domain:760] - Domain extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 650, in _get_quiz_domain
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:19,611 - FunTriviaScraper - WARNING - [_get_quiz_topic:905] - Error parsing breadcrumbs for topic: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:19,611 - FunTriviaScraper - DEBUG - [_get_quiz_topic:906] - Topic extraction error details:
+Traceback (most recent call last):
+  File "/Users/aholubov/Desktop/Projects/NoviCore/Trivio_scrapper/src/scraper/funtrivia.py", line 775, in _get_quiz_topic
+    breadcrumb_info = await page.evaluate("""
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/async_api/_generated.py", line 8119, in evaluate
+    await self._impl_obj.evaluate(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_page.py", line 416, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_frame.py", line 278, in evaluate
+    await self._channel.send(
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 59, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 509, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "/Users/aholubov/Library/Python/3.11/lib/python/site-packages/playwright/_impl/_connection.py", line 97, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._errors.Error: SyntaxError: Unexpected token ':'
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:226:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+2025-06-05 19:04:19,611 - FunTriviaScraper - DEBUG - [_extract_quiz_metadata:587] - Extracted quiz metadata: {'difficulty': 'Normal', 'domain': 'Culture', 'topic': 'General'}
+2025-06-05 19:04:19,611 - FunTriviaScraper - DEBUG - [_scrape_quiz:230] - [canadian-mineral-deposit-geolo] Extracted metadata: domain=Culture, topic=General, difficulty=Normal
+2025-06-05 19:04:19,613 - FunTriviaScraper - DEBUG - [_detect_quiz_type:1008] - Detected quiz type: Photo Quiz
+2025-06-05 19:04:19,613 - FunTriviaScraper - INFO - [_scrape_quiz:234] - [canadian-mineral-deposit-geolo] Quiz type detected: Photo Quiz
+2025-06-05 19:04:19,641 - FunTriviaScraper - INFO - [_ensure_quiz_started:1049] - No start button found - quiz may already be started
+2025-06-05 19:04:19,641 - FunTriviaScraper - DEBUG - [_scrape_quiz:244] - [canadian-mineral-deposit-geolo] Starting quiz play-through process
+2025-06-05 19:04:19,645 - FunTriviaScraper - INFO - [_extract_photo_quiz_questions:2010] - Extracted 20 photo quiz questions
+2025-06-05 19:04:19,645 - FunTriviaScraper - INFO - [_play_through_complete_quiz:1081] - Extracted 20 questions from quiz page(s)
+2025-06-05 19:04:49,655 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1135] - Failed to select answer with pattern q1: Timeout 30000ms exceeded.
+2025-06-05 19:05:19,666 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1135] - Failed to select answer with pattern q1: Timeout 30000ms exceeded.
+2025-06-05 19:05:19,673 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1139] - Could not select answer for question 1
+2025-06-05 19:05:49,679 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1135] - Failed to select answer with pattern q2: Timeout 30000ms exceeded.
+2025-06-05 19:06:19,688 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1135] - Failed to select answer with pattern q2: Timeout 30000ms exceeded.
+2025-06-05 19:06:19,696 - FunTriviaScraper - WARNING - [_submit_all_quiz_answers:1139] - Could not select answer for question 2
+2025-06-05 19:06:49,701 - FunTriviaScraper - DEBUG - [_submit_all_quiz_answers:1135] - Failed to select answer with pattern q3: Timeout 30000ms exceeded.
+2025-06-05 19:06:56,182 - FunTriviaScraper - DEBUG - [_scrape_quiz:283] - [canadian-mineral-deposit-geolo] Error closing context: Protocol error (Target.disposeBrowserContext): Failed to find context with id 0DDBB10603054A5789F73D7181E11C55
+2025-06-05 19:06:56,206 - FunTriviaScraper - ERROR - [close:79] - Error closing browser: Connection closed while reading from the driver

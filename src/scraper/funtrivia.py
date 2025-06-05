@@ -13,14 +13,14 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 # Add the src directory to the path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from .base import BaseScraper
-from .config import ScraperConfig
-from .media import MediaHandler, MediaReference
-from ..utils.rate_limiter import RateLimiter
-from ..utils.indexing import QuestionIndexer
-from ..utils.question_classifier import QuestionClassifier
-from ..utils.text_processor import TextProcessor
-from ..constants import (
+from scraper.base import BaseScraper
+from scraper.config import ScraperConfig
+from scraper.media import MediaHandler, MediaReference
+from utils.rate_limiter import RateLimiter
+from utils.indexing import QuestionIndexer
+from utils.question_classifier import QuestionClassifier
+from utils.text_processor import TextProcessor
+from constants import (
     TIMEOUTS, USER_AGENTS, DESCRIPTION_SELECTORS, 
     THRESHOLDS, DEFAULT_PATHS
 )
@@ -636,235 +636,275 @@ class FunTriviaScraper(BaseScraper):
             return "Normal"
 
     async def _get_quiz_domain(self, page: Page) -> str:
-        """Get the quiz domain/category from FunTrivia's main category (first level) with logging."""
+        """
+        Extract quiz domain by parsing breadcrumb navigation and mapping to internal domain list.
+        
+        Parses the breadcrumb navigation to find the second-to-last element (main category)
+        and maps it to our internal domain list: Nature, Science, Geography, Culture, Sports, History.
+        
+        Expected breadcrumb structure: Home » Quizzes » [MainCategory] » [SubCategory] » Quiz
+        The [MainCategory] is mapped to our internal domain.
+        """
         try:
-            domain = await page.evaluate("""
+            # Extract breadcrumb information from the page
+            breadcrumb_info = await page.evaluate("""
                 () => {
-                    // Strategy 1: Parse breadcrumbs for the main category
+                    // Strategy 1: Look for breadcrumb navigation elements
                     const breadcrumbSelectors = [
                         '.breadcrumb a, .breadcrumbs a',
-                        'nav a',
+                        'nav a, nav li a',
                         '[itemtype*="BreadcrumbList"] a',
-                        '.nav-breadcrumb a'
+                        '.nav-breadcrumb a',
+                        '.crumb a, .crumbs a',
+                        'ol.breadcrumb a, ul.breadcrumb a'
                     ];
                     
+                    let breadcrumbElements = [];
+                    
                     for (const selector of breadcrumbSelectors) {
-                        const breadcrumbLinks = document.querySelectorAll(selector);
-                        if (breadcrumbLinks.length > 1) {
-                            // Skip first link (usually "Home") and get the main category
-                            for (let i = 1; i < breadcrumbLinks.length; i++) {
-                                const link = breadcrumbLinks[i];
-                                const text = link.textContent.trim();
-                                const href = link.href || '';
-                                
-                                // Look for main category indicators in href or text
-                                if (href.includes('/Sports/') || text.toLowerCase() === 'sports') {
-                                    return 'Sports';
-                                } else if (href.includes('/Geography/') || text.toLowerCase() === 'geography') {
-                                    return 'Geography';
-                                } else if (href.includes('/History/') || text.toLowerCase() === 'history') {
-                                    return 'History';
-                                } else if (href.includes('/Science/') || text.toLowerCase() === 'science') {
-                                    return 'Science';
-                                } else if (href.includes('/Entertainment/') || 
-                                          href.includes('/Music/') || 
-                                          href.includes('/Movies/') || 
-                                          href.includes('/Literature/') ||
-                                          href.includes('/People/') ||
-                                          text.toLowerCase().includes('entertainment') ||
-                                          text.toLowerCase().includes('music') ||
-                                          text.toLowerCase().includes('movies') ||
-                                          text.toLowerCase().includes('literature') ||
-                                          text.toLowerCase().includes('people')) {
-                                    return 'Culture';
-                                } else if (href.includes('/Animals/') || 
-                                          href.includes('/Nature/') ||
-                                          text.toLowerCase().includes('animals') ||
-                                          text.toLowerCase().includes('nature')) {
-                                    return 'Nature';
-                                } else if (href.includes('/Religion/') || text.toLowerCase().includes('religion')) {
-                                    return 'Religion';
-                                }
-                            }
+                        const elements = document.querySelectorAll(selector);
+                        if (elements.length > 2) {  // Need at least Home » Category » Subcategory
+                            breadcrumbElements = Array.from(elements).map(el => ({
+                                text: el.textContent.trim(),
+                                href: el.href || ''
+                            }));
+                            break;
                         }
                     }
                     
-                    // Strategy 2: Look in URL path for main category
-                    const urlPath = window.location.pathname;
-                    const pathParts = urlPath.split('/').filter(part => part && 
-                        part !== 'quiz' && 
-                        part !== 'trivia-quiz' && 
-                        part !== 'en' &&
-                        !part.endsWith('.html'));
-                    
-                    if (pathParts.length > 0) {
-                        const mainCategory = pathParts[0].toLowerCase();
+                    // Strategy 2: Look for breadcrumb text patterns if links not found
+                    if (breadcrumbElements.length === 0) {
+                        const breadcrumbTextSelectors = [
+                            '.breadcrumb, .breadcrumbs',
+                            'nav',
+                            '.nav-breadcrumb',
+                            '.crumb, .crumbs'
+                        ];
                         
-                        // Map URL categories to domains based on FunTrivia structure
-                        const categoryMap = {
-                            'sports': 'Sports',
-                            'geography': 'Geography', 
-                            'world': 'Geography',
-                            'history': 'History',
-                            'science': 'Science',
-                            'entertainment': 'Culture',
-                            'music': 'Culture',
-                            'movies': 'Culture',
-                            'literature': 'Culture',
-                            'people': 'Culture',
-                            'humanities': 'Culture',
-                            'general': 'Culture',
-                            'animals': 'Nature',
-                            'nature': 'Nature',
-                            'religion': 'Religion'
-                        };
-                        
-                        if (categoryMap[mainCategory]) {
-                            return categoryMap[mainCategory];
-                        }
-                        
-                        // Return capitalized category if not specifically mapped
-                        return mainCategory.charAt(0).toUpperCase() + mainCategory.slice(1);
-                    }
-                    
-                    // Strategy 3: Look in page title for category hints
-                    const title = document.title.toLowerCase();
-                    if (title.includes('sports')) return 'Sports';
-                    if (title.includes('geography') || title.includes('world')) return 'Geography';
-                    if (title.includes('history')) return 'History';
-                    if (title.includes('science')) return 'Science';
-                    if (title.includes('animal') || title.includes('nature')) return 'Nature';
-                    if (title.includes('religion')) return 'Religion';
-                    
-                    return 'Culture'; // Default for entertainment/general content
-                }
-            """)
-            self.logger.debug(f"Detected domain: {domain}")
-            return domain
-        except Exception as e:
-            self.logger.debug(f"Error getting domain: {e}")
-            return "Culture"
-
-    async def _get_quiz_topic(self, page: Page) -> str:
-        """Get the quiz topic from FunTrivia's subcategory (second level) with logging."""
-        try:
-            topic = await page.evaluate("""
-                () => {
-                    // Strategy 1: Parse breadcrumbs for the subcategory
-                    const breadcrumbSelectors = [
-                        '.breadcrumb a, .breadcrumbs a',
-                        'nav a',
-                        '[itemtype*="BreadcrumbList"] a',
-                        '.nav-breadcrumb a'
-                    ];
-                    
-                    for (const selector of breadcrumbSelectors) {
-                        const breadcrumbLinks = document.querySelectorAll(selector);
-                        if (breadcrumbLinks.length > 2) {
-                            // Get the subcategory (second level after main category)
-                            // Structure: Home » MainCategory » SubCategory » Quiz
-                            for (let i = 2; i < breadcrumbLinks.length - 1; i++) {
-                                const link = breadcrumbLinks[i];
-                                const text = link.textContent.trim();
-                                
-                                // Clean up the subcategory name
-                                if (text && text.length > 2 && text.length < 50) {
-                                    // Remove common suffixes and clean
-                                    let cleanTopic = text
-                                        .replace(/\s*(trivia|quiz|quizzes)\s*$/i, '')
-                                        .replace(/\s+/g, ' ')
-                                        .trim();
-                                    
-                                    if (cleanTopic && cleanTopic.length > 2) {
-                                        return cleanTopic;
+                        for (const selector of breadcrumbTextSelectors) {
+                            const element = document.querySelector(selector);
+                            if (element) {
+                                const text = element.textContent;
+                                // Look for typical breadcrumb separators
+                                const separators = ['»', '>', '/', '\\', '|', '::'];
+                                for (const sep of separators) {
+                                    if (text.includes(sep)) {
+                                        const parts = text.split(sep).map(p => p.trim()).filter(p => p);
+                                        if (parts.length > 2) {
+                                            breadcrumbElements = parts.map(p => ({ text: p, href: '' }));
+                                            break;
+                                        }
                                     }
                                 }
+                                if (breadcrumbElements.length > 0) break;
                             }
                         }
                     }
                     
-                    // Strategy 2: Extract from URL path (second level)
-                    const urlPath = window.location.pathname;
-                    const pathParts = urlPath.split('/').filter(part => part && 
-                        part !== 'quiz' && 
-                        part !== 'trivia-quiz' && 
-                        part !== 'en' &&
-                        !part.endsWith('.html'));
-                    
-                    if (pathParts.length > 1) {
-                        const subCategory = pathParts[1];
-                        
-                        // Clean up subcategory from URL
-                        let cleanTopic = subCategory
-                            .replace(/[-_]/g, ' ')  // Replace hyphens and underscores with spaces
-                            .replace(/([a-z])([A-Z])/g, '$1 $2')  // Add space before capital letters
-                            .split(' ')
-                            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                            .join(' ')
-                            .trim();
-                        
-                        if (cleanTopic && cleanTopic.length > 2) {
-                            return cleanTopic;
-                        }
-                    }
-                    
-                    // Strategy 3: Look in page content for category information
-                    const categoryInfo = document.querySelector('.category-info, .quiz-category, .topic-header');
-                    if (categoryInfo) {
-                        const text = categoryInfo.textContent.trim();
-                        const topicMatch = text.match(/(?:category|topic):\s*([^\n\r]{3,40})/i);
-                        if (topicMatch) {
-                            return topicMatch[1].trim();
-                        }
-                    }
-                    
-                    // Strategy 4: Extract from quiz description or metadata
-                    const descriptionSelectors = [
-                        '.quiz-description',
-                        '.category-description', 
-                        'meta[name="description"]',
-                        '.topic-intro'
-                    ];
-                    
-                    for (const selector of descriptionSelectors) {
-                        const element = document.querySelector(selector);
-                        if (element) {
-                            const content = element.content || element.textContent;
-                            if (content) {
-                                // Look for patterns like "related to X" or "about X"
-                                const topicMatch = content.match(/(?:related to|about|concerning)\s+([A-Z][^.]{2,30})/i);
-                                if (topicMatch) {
-                                    return topicMatch[1].trim();
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Strategy 5: Last resort - clean up h1 title but only if it looks like a category name
-                    const titleElement = document.querySelector('h1');
-                    if (titleElement) {
-                        let title = titleElement.textContent.trim();
-                        title = title.replace(/\s*(trivia\s*)?(questions?\s*and\s*answers?|quiz)\s*$/i, '').trim();
-                        
-                        // Only use if it looks like a category name (not too specific)
-                        if (title.length > 3 && title.length < 30 && 
-                            !title.match(/\d/) && // No numbers
-                            !title.includes('?') && // No question marks
-                            !title.toLowerCase().includes('trivia') && // Not generic "trivia"
-                            !title.toLowerCase().includes('questions') && // Not generic "questions"
-                            title.split(' ').length <= 4) { // Not too many words
-                            return title;
-                        }
-                    }
-                    
-                    return 'General';
+                    return {
+                        breadcrumbs: breadcrumbElements,
+                        url: window.location.pathname,
+                        title: document.title
+                    };
                 }
             """)
-            self.logger.debug(f"Detected topic: {topic}")
-            return topic
+            
+            raw_domain = None
+            
+            # Extract domain from breadcrumbs (second-to-last element)
+            if breadcrumb_info['breadcrumbs'] and len(breadcrumb_info['breadcrumbs']) > 2:
+                # Skip first element (usually "Home") and get the main category
+                # Structure: Home » Quizzes » [MainCategory] » [SubCategory] » Quiz
+                # We want the second-to-last meaningful element
+                meaningful_breadcrumbs = [
+                    b for b in breadcrumb_info['breadcrumbs'] 
+                    if b['text'].lower() not in ['home', 'quizzes', 'trivia', 'quiz']
+                ]
+                
+                if len(meaningful_breadcrumbs) >= 2:
+                    # Get the second-to-last element as domain
+                    raw_domain = meaningful_breadcrumbs[-2]['text'].strip()
+                elif len(meaningful_breadcrumbs) >= 1:
+                    # Fallback to first meaningful element
+                    raw_domain = meaningful_breadcrumbs[0]['text'].strip()
+            
+            # Fallback: Extract from URL if breadcrumbs parsing failed
+            if not raw_domain:
+                url_path = breadcrumb_info['url']
+                path_parts = [p for p in url_path.split('/') if p and p not in ['quiz', 'trivia-quiz', 'en']]
+                if path_parts:
+                    raw_domain = path_parts[0].replace('-', ' ').replace('_', ' ').title()
+            
+            # Final fallback: Extract from page title
+            if not raw_domain:
+                title = breadcrumb_info['title']
+                title_parts = title.split(' - ')
+                if len(title_parts) > 1:
+                    raw_domain = title_parts[0].strip()
+                else:
+                    raw_domain = "Entertainment"  # Common default for FunTrivia
+            
+            self.logger.debug(f"Raw domain extracted from breadcrumbs: '{raw_domain}'")
+            
+            # Map the raw domain to our internal domain list using the configuration
+            if raw_domain:
+                mapped_domain = self.scraper_config.map_domain(raw_domain)
+                self.logger.debug(f"Domain mapping: '{raw_domain}' -> '{mapped_domain}'")
+                return mapped_domain
+            else:
+                self.logger.warning("No domain found in breadcrumbs, using default 'Culture'")
+                return "Culture"
+                
         except Exception as e:
-            self.logger.debug(f"Error getting topic: {e}")
-            return "General"
+            self.logger.warning(f"Error parsing breadcrumbs for domain: {e}")
+            self.logger.debug("Domain extraction error details:", exc_info=True)
+            return "Culture"  # Safe fallback
+
+    async def _get_quiz_topic(self, page: Page) -> str:
+        """
+        Extract quiz topic by parsing breadcrumb navigation and mapping to internal topic list.
+        
+        Parses the breadcrumb navigation to find the last meaningful element (subcategory)
+        and maps it to our internal topic list using the topic mapping configuration.
+        
+        Expected breadcrumb structure: Home » Quizzes » [MainCategory] » [SubCategory] » Quiz
+        The [SubCategory] is mapped to our internal topic, with fallback to raw string if not found.
+        """
+        try:
+            # Extract breadcrumb information from the page
+            breadcrumb_info = await page.evaluate("""
+                () => {
+                    // Strategy 1: Look for breadcrumb navigation elements
+                    const breadcrumbSelectors = [
+                        '.breadcrumb a, .breadcrumbs a',
+                        'nav a, nav li a',
+                        '[itemtype*="BreadcrumbList"] a',
+                        '.nav-breadcrumb a',
+                        '.crumb a, .crumbs a',
+                        'ol.breadcrumb a, ul.breadcrumb a'
+                    ];
+                    
+                    let breadcrumbElements = [];
+                    
+                    for (const selector of breadcrumbSelectors) {
+                        const elements = document.querySelectorAll(selector);
+                        if (elements.length > 2) {  // Need at least Home » Category » Subcategory
+                            breadcrumbElements = Array.from(elements).map(el => ({
+                                text: el.textContent.trim(),
+                                href: el.href || ''
+                            }));
+                            break;
+                        }
+                    }
+                    
+                    // Strategy 2: Look for breadcrumb text patterns if links not found
+                    if (breadcrumbElements.length === 0) {
+                        const breadcrumbTextSelectors = [
+                            '.breadcrumb, .breadcrumbs',
+                            'nav',
+                            '.nav-breadcrumb',
+                            '.crumb, .crumbs'
+                        ];
+                        
+                        for (const selector of breadcrumbTextSelectors) {
+                            const element = document.querySelector(selector);
+                            if (element) {
+                                const text = element.textContent;
+                                // Look for typical breadcrumb separators
+                                const separators = ['»', '>', '/', '\\', '|', '::'];
+                                for (const sep of separators) {
+                                    if (text.includes(sep)) {
+                                        const parts = text.split(sep).map(p => p.trim()).filter(p => p);
+                                        if (parts.length > 2) {
+                                            breadcrumbElements = parts.map(p => ({ text: p, href: '' }));
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (breadcrumbElements.length > 0) break;
+                            }
+                        }
+                    }
+                    
+                    return {
+                        breadcrumbs: breadcrumbElements,
+                        url: window.location.pathname,
+                        title: document.title
+                    };
+                }
+            """)
+            
+            raw_topic = None
+            
+            # Extract topic from breadcrumbs (last meaningful element)
+            if breadcrumb_info['breadcrumbs'] and len(breadcrumb_info['breadcrumbs']) > 1:
+                # Filter out non-meaningful breadcrumb elements
+                meaningful_breadcrumbs = [
+                    b for b in breadcrumb_info['breadcrumbs'] 
+                    if b['text'].lower() not in ['home', 'quizzes', 'trivia', 'quiz']
+                ]
+                
+                if len(meaningful_breadcrumbs) >= 1:
+                    # Get the last meaningful element as topic (subcategory)
+                    raw_topic = meaningful_breadcrumbs[-1]['text'].strip()
+                    
+                    # Clean up the topic by removing common suffixes
+                    raw_topic = raw_topic.replace(' Trivia', '').replace(' Quiz', '').replace(' Quizzes', '').strip()
+            
+            # Fallback: Extract from URL if breadcrumbs parsing failed
+            if not raw_topic:
+                url_path = breadcrumb_info['url']
+                path_parts = [p for p in url_path.split('/') if p and p not in ['quiz', 'trivia-quiz', 'en']]
+                if len(path_parts) > 1:
+                    raw_topic = path_parts[-1].replace('-', ' ').replace('_', ' ').title()
+                elif len(path_parts) > 0:
+                    raw_topic = path_parts[0].replace('-', ' ').replace('_', ' ').title()
+            
+            # Final fallback: Extract from page title
+            if not raw_topic:
+                title = breadcrumb_info['title']
+                # Try to extract topic from title pattern
+                title_lower = title.lower()
+                if 'trivia' in title_lower:
+                    # Extract the part before 'trivia'
+                    parts = title.split(' Trivia')[0].split(' - ')
+                    if parts:
+                        raw_topic = parts[-1].strip()
+                else:
+                    title_parts = title.split(' - ')
+                    if len(title_parts) > 1:
+                        raw_topic = title_parts[-1].strip()
+                    else:
+                        raw_topic = "General"
+            
+            self.logger.debug(f"Raw topic extracted from breadcrumbs: '{raw_topic}'")
+            
+            # Map the raw topic to our internal topic list using the configuration
+            if raw_topic:
+                mapped_topic = self.scraper_config.map_topic(raw_topic)
+                self.logger.debug(f"Topic mapping: '{raw_topic}' -> '{mapped_topic}'")
+                
+                # Log warning if mapping failed (fallback to raw value)
+                if mapped_topic == raw_topic:
+                    # Check if this is actually a failed mapping (not in our config)
+                    topic_found_in_config = False
+                    for std_topic, raw_values in self.scraper_config.mappings['topic_mapping'].items():
+                        if raw_topic.lower() in [v.lower() for v in raw_values]:
+                            topic_found_in_config = True
+                            break
+                    
+                    if not topic_found_in_config:
+                        self.logger.warning(f"Topic '{raw_topic}' not found in topic mapping config. Using raw value as fallback. Consider adding to topic_mapping in mappings.json")
+                
+                return mapped_topic
+            else:
+                self.logger.warning("No topic found in breadcrumbs, using default 'General'")
+                return "General"
+                
+        except Exception as e:
+            self.logger.warning(f"Error parsing breadcrumbs for topic: {e}")
+            self.logger.debug("Topic extraction error details:", exc_info=True)
+            return "General"  # Safe fallback
 
     async def _detect_quiz_type(self, page: Page) -> str:
         """Detect the type of quiz from the page content with logging."""
@@ -1248,60 +1288,302 @@ class FunTriviaScraper(BaseScraper):
             return await self._enhance_questions_basic(original_questions)
 
     async def _extract_from_result_blocks(self, page: Page, original_questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Extract results from structured result blocks."""
+        """
+        Extract results from structured result blocks on the results page.
+        
+        This method locates individual result blocks for each question and extracts:
+        - Correct answer information
+        - Full explanation/description blocks ("Interesting Information")
+        - Handles both single and multi-paragraph explanations
+        """
         try:
-            result_selectors = ['.questionReview', '.questionTable', '.result-item', '.question-result']
-            result_blocks = []
+            # Try multiple selectors to find result blocks for questions
+            result_selectors = [
+                '.questionReview',           # Common FunTrivia results class
+                '.questionTable',            # Table-based results layout
+                '.result-item',              # Generic result item
+                '.question-result',          # Question-specific result block
+                '.quiz-result-item',         # Alternative quiz result format
+                'tr[class*="question"]',     # Table row with question class
+                'div[class*="question"]',    # Div with question class
+                '.question-block'            # Question block wrapper
+            ]
             
+            result_blocks = []
+            successful_selector = None
+            
+            # Find the best selector that gives us enough result blocks
             for selector in result_selectors:
-                result_blocks = await page.query_selector_all(selector)
-                if result_blocks and len(result_blocks) >= len(original_questions):
+                blocks = await page.query_selector_all(selector)
+                if blocks and len(blocks) >= len(original_questions):
+                    result_blocks = blocks
+                    successful_selector = selector
+                    self.logger.debug(f"Found {len(blocks)} result blocks using selector: {selector}")
                     break
+                elif blocks:
+                    self.logger.debug(f"Found {len(blocks)} result blocks with selector {selector} (need {len(original_questions)})")
             
             if not result_blocks:
+                self.logger.warning("No structured result blocks found on results page")
                 return []
             
+            self.logger.info(f"Extracting results from {len(result_blocks)} structured blocks using selector: {successful_selector}")
+            
             enhanced_questions = []
+            extraction_stats = {'correct_answers_found': 0, 'explanations_found': 0, 'explanations_missing': 0}
+            
             for i, (question, result_block) in enumerate(zip(original_questions, result_blocks)):
                 try:
-                    # Extract correct answer and hint from result block
-                    correct_answer = await self._extract_correct_answer_from_block(result_block)
-                    hint = await self._extract_hint_from_block(result_block)
+                    question_num = question.get('questionNumber', str(i+1))
+                    self.logger.debug(f"Processing result block for question {question_num}")
                     
+                    # Extract correct answer from the result block
+                    correct_answer = await self._extract_correct_answer_from_block(result_block)
+                    if correct_answer:
+                        extraction_stats['correct_answers_found'] += 1
+                        self.logger.debug(f"Found correct answer for Q{question_num}: {correct_answer[:50]}...")
+                    
+                    # Extract explanation/description from the result block
+                    explanation = await self._extract_explanation_from_block(result_block, question_num)
+                    if explanation:
+                        extraction_stats['explanations_found'] += 1
+                        self.logger.debug(f"Found explanation for Q{question_num}: {len(explanation)} characters")
+                    else:
+                        extraction_stats['explanations_missing'] += 1
+                        self.logger.warning(f"No explanation found for question {question_num}")
+                    
+                    # Create enhanced question with extracted data
                     enhanced_question = question.copy()
-                    enhanced_question['correct_answer'] = correct_answer or question.get('options', [''])[0]
-                    enhanced_question['hint'] = hint or ''
+                    enhanced_question['correct_answer'] = correct_answer or question.get('options', ['Unknown'])[0]
+                    enhanced_question['hint'] = explanation or ''
+                    enhanced_question['description'] = explanation or ''  # Store in both fields for compatibility
                     
                     enhanced_questions.append(enhanced_question)
                     
                 except Exception as e:
-                    self.logger.debug(f"Error processing result block {i}: {e}")
-                    enhanced_questions.append(question)
+                    self.logger.error(f"Error processing result block {i} for question {question.get('questionNumber', i+1)}: {e}")
+                    # Add question with minimal enhancement on error
+                    enhanced_question = question.copy()
+                    enhanced_question['correct_answer'] = question.get('options', ['Unknown'])[0]
+                    enhanced_question['hint'] = ''
+                    enhanced_question['description'] = ''
+                    enhanced_questions.append(enhanced_question)
+            
+            # Log extraction statistics
+            self.logger.info(f"Result extraction stats: {extraction_stats['correct_answers_found']}/{len(original_questions)} correct answers, "
+                           f"{extraction_stats['explanations_found']}/{len(original_questions)} explanations found")
+            
+            if extraction_stats['explanations_missing'] > 0:
+                self.logger.warning(f"{extraction_stats['explanations_missing']} questions missing explanations")
             
             return enhanced_questions
             
         except Exception as e:
-            self.logger.debug(f"Error extracting from result blocks: {e}")
+            self.logger.error(f"Error extracting from result blocks: {e}")
+            self.logger.debug("Result blocks extraction error details:", exc_info=True)
             return []
 
     async def _extract_from_text_results(self, page: Page, original_questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Extract results from text-based results format."""
+        """
+        Extract results from text-based results format (fallback method).
+        
+        This method parses the entire page text to find question results when
+        structured result blocks are not available. It looks for patterns like:
+        - Question numbers followed by correct answers
+        - "Interesting Information" or explanation blocks
+        - Text patterns that indicate question boundaries
+        """
         try:
+            self.logger.info("Attempting text-based results extraction (fallback method)")
+            
+            # Get all text content from the results page
             page_text = await page.evaluate('document.body.innerText')
-            lines = page_text.split('\n')
+            lines = [line.strip() for line in page_text.split('\n') if line.strip()]
+            
             enhanced_questions = []
+            extraction_stats = {'correct_answers_found': 0, 'explanations_found': 0}
             
             for i, question in enumerate(original_questions):
-                enhanced_question = question.copy()
-                enhanced_question['correct_answer'] = question.get('options', [''])[0]
-                enhanced_question['hint'] = ''
-                enhanced_questions.append(enhanced_question)
+                question_num = question.get('questionNumber', str(i+1))
+                
+                try:
+                    # Look for this question's results in the text
+                    correct_answer = self._find_correct_answer_in_text(lines, question_num, question)
+                    explanation = self._find_explanation_in_text(lines, question_num)
+                    
+                    if correct_answer:
+                        extraction_stats['correct_answers_found'] += 1
+                    
+                    if explanation:
+                        extraction_stats['explanations_found'] += 1
+                        self.logger.debug(f"Found text-based explanation for Q{question_num}: {len(explanation)} characters")
+                    else:
+                        self.logger.warning(f"No explanation found in text for question {question_num}")
+                    
+                    # Create enhanced question
+                    enhanced_question = question.copy()
+                    enhanced_question['correct_answer'] = correct_answer or question.get('options', ['Unknown'])[0]
+                    enhanced_question['hint'] = explanation or ''
+                    enhanced_question['description'] = explanation or ''
+                    
+                    enhanced_questions.append(enhanced_question)
+                    
+                except Exception as e:
+                    self.logger.error(f"Error processing text results for question {question_num}: {e}")
+                    # Add question with minimal enhancement on error
+                    enhanced_question = question.copy()
+                    enhanced_question['correct_answer'] = question.get('options', ['Unknown'])[0]
+                    enhanced_question['hint'] = ''
+                    enhanced_question['description'] = ''
+                    enhanced_questions.append(enhanced_question)
+            
+            self.logger.info(f"Text extraction stats: {extraction_stats['correct_answers_found']}/{len(original_questions)} correct answers, "
+                           f"{extraction_stats['explanations_found']}/{len(original_questions)} explanations found")
             
             return enhanced_questions
             
         except Exception as e:
-            self.logger.debug(f"Error extracting from text results: {e}")
+            self.logger.error(f"Error extracting from text results: {e}")
+            self.logger.debug("Text results extraction error details:", exc_info=True)
             return []
+
+    def _find_correct_answer_in_text(self, lines: List[str], question_num: str, question: Dict[str, Any]) -> Optional[str]:
+        """
+        Find the correct answer for a specific question in the text lines.
+        
+        Looks for patterns like:
+        - "Question X: Correct Answer: [answer]"
+        - "1. [answer]" (in results context)
+        - Answer options that match the question's options
+        """
+        try:
+            question_options = question.get('options', [])
+            
+            # Look for explicit correct answer patterns
+            for i, line in enumerate(lines):
+                line_lower = line.lower()
+                
+                # Pattern 1: "Question X" followed by correct answer
+                if f"question {question_num}" in line_lower or f"{question_num}." in line:
+                    # Look in current line and next few lines for answer patterns
+                    search_lines = lines[i:i+5]
+                    for search_line in search_lines:
+                        search_lower = search_line.lower()
+                        
+                        if any(keyword in search_lower for keyword in ['correct answer:', 'answer:', 'correct:']):
+                            # Extract answer after the keyword
+                            for keyword in ['correct answer:', 'answer:', 'correct:']:
+                                if keyword in search_lower:
+                                    potential_answer = search_line[search_lower.index(keyword) + len(keyword):].strip()
+                                    # Validate against question options
+                                    for option in question_options:
+                                        if option.lower() in potential_answer.lower() or potential_answer.lower() in option.lower():
+                                            return option
+                                    return potential_answer
+                
+                # Pattern 2: Direct option match in results context
+                if f"{question_num}." in line and any(opt.lower() in line_lower for opt in question_options):
+                    for option in question_options:
+                        if option.lower() in line_lower:
+                            return option
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Error finding correct answer in text for question {question_num}: {e}")
+            return None
+
+    def _find_explanation_in_text(self, lines: List[str], question_num: str) -> Optional[str]:
+        """
+        Find the explanation/description for a specific question in the text lines.
+        
+        Looks for explanation blocks that follow question results, including:
+        - "Interesting Information:" sections
+        - "Explanation:" blocks
+        - Multi-paragraph descriptions following the correct answer
+        """
+        try:
+            explanation_parts = []
+            in_explanation = False
+            explanation_started = False
+            
+            for i, line in enumerate(lines):
+                line_lower = line.lower()
+                
+                # Check if we're at the right question
+                if f"question {question_num}" in line_lower or (f"{question_num}." in line and len(line) < 50):
+                    explanation_started = True
+                    continue
+                
+                if not explanation_started:
+                    continue
+                
+                # Look for explanation start markers
+                explanation_markers = [
+                    'interesting information',
+                    'interesting info',
+                    'explanation',
+                    'additional information',
+                    'trivia',
+                    'did you know',
+                    'fun fact',
+                    'background',
+                    'more info'
+                ]
+                
+                if any(marker in line_lower for marker in explanation_markers):
+                    in_explanation = True
+                    # If the line contains both marker and text, include the text part
+                    for marker in explanation_markers:
+                        if marker in line_lower:
+                            marker_end = line_lower.index(marker) + len(marker)
+                            text_after_marker = line[marker_end:].strip(' :')
+                            if text_after_marker:
+                                explanation_parts.append(text_after_marker)
+                            break
+                    continue
+                
+                # If we're in an explanation, collect lines until we hit a stopping condition
+                if in_explanation:
+                    # Stop conditions for explanation
+                    stop_conditions = [
+                        line_lower.startswith('question'),  # Next question
+                        'your score' in line_lower,         # Score section
+                        'quiz complete' in line_lower,      # Quiz end
+                        line_lower.startswith('correct answer:'),  # Another question's answer
+                        len(line) < 10 and line.isdigit(),  # Question number alone
+                        'submit' in line_lower and 'quiz' in line_lower  # Submit buttons
+                    ]
+                    
+                    if any(condition for condition in stop_conditions):
+                        break
+                    
+                    # Collect meaningful explanation text
+                    if (len(line) > 15 and  # Substantial content
+                        not line.lower().startswith(('a)', 'b)', 'c)', 'd)')) and  # Not answer options
+                        not line.lower().startswith('question') and  # Not question text
+                        'correct answer' not in line_lower):  # Not answer declaration
+                        
+                        explanation_parts.append(line)
+                
+                # Check if we've moved to the next question (stop collecting)
+                next_question_num = str(int(question_num) + 1)
+                if (f"question {next_question_num}" in line_lower or 
+                    (f"{next_question_num}." in line and len(line) < 50)):
+                    break
+            
+            # Join explanation parts with proper spacing
+            if explanation_parts:
+                explanation = ' '.join(explanation_parts).strip()
+                # Clean up extra whitespace
+                explanation = ' '.join(explanation.split())
+                return explanation if len(explanation) > 20 else None  # Minimum length filter
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Error finding explanation in text for question {question_num}: {e}")
+            return None
 
     async def _extract_correct_answer_from_block(self, result_block) -> Optional[str]:
         """Extract correct answer from a result block."""
@@ -1322,24 +1604,239 @@ class FunTriviaScraper(BaseScraper):
             self.logger.debug(f"Error extracting correct answer: {e}")
         return None
 
-    async def _extract_hint_from_block(self, result_block) -> Optional[str]:
-        """Extract hint/explanation from a result block."""
+    async def _extract_explanation_from_block(self, result_block, question_num: str) -> Optional[str]:
+        """
+        Extract explanation/description from a result block element.
+        
+        This method handles various layouts of result blocks and looks for:
+        1. "Interesting Information" sections (FunTrivia's standard explanation label)
+        2. Generic explanation markers like "Explanation:", "Info:", etc.
+        3. Multi-paragraph explanation blocks
+        4. Explanations that may contain embedded media or special formatting
+        
+        Args:
+            result_block: The DOM element containing the question's results
+            question_num: Question number for logging purposes
+            
+        Returns:
+            Extracted explanation text or None if not found
+        """
         try:
-            text = await result_block.inner_text()
+            # Get all text content from the result block
+            block_text = await result_block.inner_text()
+            
+            if not block_text:
+                return None
+            
+            # Strategy 1: Look for "Interesting Information" sections (FunTrivia standard)
+            explanation = self._extract_interesting_information(block_text)
+            if explanation:
+                self.logger.debug(f"Found 'Interesting Information' for Q{question_num}")
+                return explanation
+            
+            # Strategy 2: Look for other explanation markers
+            explanation = self._extract_generic_explanation(block_text)
+            if explanation:
+                self.logger.debug(f"Found generic explanation for Q{question_num}")
+                return explanation
+            
+            # Strategy 3: Look for explanation in HTML structure
+            explanation = await self._extract_explanation_from_html_structure(result_block)
+            if explanation:
+                self.logger.debug(f"Found structured explanation for Q{question_num}")
+                return explanation
+            
+            # Strategy 4: Heuristic-based extraction (look for substantial text blocks)
+            explanation = self._extract_heuristic_explanation(block_text)
+            if explanation:
+                self.logger.debug(f"Found heuristic explanation for Q{question_num}")
+                return explanation
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Error extracting explanation from block for Q{question_num}: {e}")
+            return None
+
+    def _extract_interesting_information(self, text: str) -> Optional[str]:
+        """
+        Extract text from "Interesting Information" sections.
+        
+        FunTrivia commonly uses "Interesting Information:" as the label for
+        question explanations. This method finds and extracts that content.
+        """
+        try:
+            # Look for "Interesting Information" patterns (case insensitive)
             patterns = [
-                r'Explanation:\s*(.+?)(?:\n\n|$)',
-                r'Hint:\s*(.+?)(?:\n\n|$)',
-                r'Info:\s*(.+?)(?:\n\n|$)'
+                r'Interesting Information:\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Interesting Info:\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Interesting Information\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'(?:^|\n)Interesting Information[:\s]*\n(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))'
             ]
             
             for pattern in patterns:
                 match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
                 if match:
-                    return match.group(1).strip()
-                    
+                    explanation = match.group(1).strip()
+                    # Clean up the explanation text
+                    explanation = self._clean_explanation_text(explanation)
+                    if len(explanation) > 20:  # Minimum meaningful length
+                        return explanation
+            
+            return None
+            
         except Exception as e:
-            self.logger.debug(f"Error extracting hint: {e}")
-        return None
+            self.logger.debug(f"Error extracting interesting information: {e}")
+            return None
+
+    def _extract_generic_explanation(self, text: str) -> Optional[str]:
+        """
+        Extract explanations using generic markers like "Explanation:", "Info:", etc.
+        """
+        try:
+            # Generic explanation patterns
+            patterns = [
+                r'Explanation:\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Info:\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Additional Information:\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Details:\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Trivia:\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Did you know[?:]\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Fun fact[?:]\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))',
+                r'Background:\s*(.+?)(?:\n\n|\n(?=Question|\d+\.|\Z))'
+            ]
+            
+            for pattern in patterns:
+                match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+                if match:
+                    explanation = match.group(1).strip()
+                    explanation = self._clean_explanation_text(explanation)
+                    if len(explanation) > 20:
+                        return explanation
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Error extracting generic explanation: {e}")
+            return None
+
+    async def _extract_explanation_from_html_structure(self, result_block) -> Optional[str]:
+        """
+        Extract explanation by analyzing the HTML structure of the result block.
+        
+        Looks for specific elements that commonly contain explanations:
+        - Divs or paragraphs with explanation-related classes
+        - Text that follows the correct answer in the DOM structure
+        """
+        try:
+            # Look for explanation-specific elements
+            explanation_selectors = [
+                '.explanation',
+                '.interesting-info',
+                '.additional-info',
+                '.trivia-info',
+                '.fun-fact',
+                '.background-info',
+                'p:has-text("Interesting")',
+                'div:has-text("Interesting")',
+                '[class*="explanation"]',
+                '[class*="interesting"]',
+                '[class*="info"]'
+            ]
+            
+            for selector in explanation_selectors:
+                try:
+                    explanation_element = await result_block.query_selector(selector)
+                    if explanation_element:
+                        text = await explanation_element.inner_text()
+                        if text and len(text) > 20:
+                            return self._clean_explanation_text(text)
+                except Exception:
+                    continue
+            
+            # Fallback: Look for substantial text blocks after "Correct Answer"
+            try:
+                all_elements = await result_block.query_selector_all('p, div')
+                found_correct_answer = False
+                
+                for element in all_elements:
+                    element_text = await element.inner_text()
+                    element_text_lower = element_text.lower()
+                    
+                    # Mark when we pass the correct answer
+                    if 'correct answer' in element_text_lower:
+                        found_correct_answer = True
+                        continue
+                    
+                    # Look for substantial explanation text after correct answer
+                    if (found_correct_answer and 
+                        len(element_text) > 30 and 
+                        not element_text_lower.startswith(('question', 'q.', 'your score'))):
+                        
+                        cleaned_text = self._clean_explanation_text(element_text)
+                        if len(cleaned_text) > 20:
+                            return cleaned_text
+                
+            except Exception:
+                pass
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Error extracting explanation from HTML structure: {e}")
+            return None
+
+    def _extract_heuristic_explanation(self, text: str) -> Optional[str]:
+        """
+        Extract explanation using heuristic methods when explicit markers are not found.
+        
+        This method looks for substantial text blocks that likely contain explanations
+        based on their position and content characteristics.
+        """
+        try:
+            lines = [line.strip() for line in text.split('\n') if line.strip()]
+            
+            explanation_candidates = []
+            found_correct_answer = False
+            
+            for line in lines:
+                line_lower = line.lower()
+                
+                # Mark when we pass the correct answer line
+                if 'correct answer' in line_lower:
+                    found_correct_answer = True
+                    continue
+                
+                # Skip question headers and short lines
+                if (line_lower.startswith(('question', 'q.')) or 
+                    len(line) < 25 or
+                    line_lower.startswith(('your score', 'submit', 'next question'))):
+                    continue
+                
+                # Collect substantial text that comes after the correct answer
+                if (found_correct_answer and 
+                    len(line) > 30 and
+                    not line.lower().startswith(('a)', 'b)', 'c)', 'd)')) and  # Not answer options
+                    not line.isdigit()):  # Not just numbers
+                    
+                    explanation_candidates.append(line)
+            
+            # Join explanation candidates and validate
+            if explanation_candidates:
+                explanation = ' '.join(explanation_candidates)
+                explanation = self._clean_explanation_text(explanation)
+                
+                # Validate that this looks like an explanation (not just random text)
+                if (len(explanation) > 50 and 
+                    not explanation.lower().startswith('question') and
+                    ' ' in explanation):  # Contains spaces (not just a single word)
+                    return explanation
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Error extracting heuristic explanation: {e}")
+            return None
 
     async def _enhance_questions_basic(self, original_questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Basic enhancement of questions when results page extraction fails."""
@@ -1349,9 +1846,49 @@ class FunTriviaScraper(BaseScraper):
             enhanced_question = question.copy()
             enhanced_question['correct_answer'] = question.get('options', ['Unknown'])[0]
             enhanced_question['hint'] = ''
+            enhanced_question['description'] = ''
             enhanced_questions.append(enhanced_question)
         
         return enhanced_questions
+
+    def _clean_explanation_text(self, text: str) -> str:
+        """
+        Clean and normalize explanation text.
+        
+        Removes excessive whitespace, cleans up formatting artifacts,
+        and normalizes the text for storage in the CSV output.
+        """
+        if not text:
+            return ""
+        
+        # Remove excessive whitespace and normalize line breaks
+        text = ' '.join(text.split())
+        
+        # Remove common formatting artifacts
+        text = text.replace('  ', ' ')
+        text = text.strip(' .,;:')
+        
+        # Remove leading markers if they somehow got included
+        prefixes_to_remove = [
+            'Interesting Information:',
+            'Interesting Info:',
+            'Explanation:',
+            'Info:',
+            'Additional Information:',
+            'Details:',
+            'Trivia:',
+            'Did you know:',
+            'Did you know?',
+            'Fun fact:',
+            'Background:'
+        ]
+        
+        for prefix in prefixes_to_remove:
+            if text.startswith(prefix):
+                text = text[len(prefix):].strip()
+                break
+        
+        return text.strip()
 
     def _extract_audio_url(self, question_data: Dict[str, Any]) -> Optional[str]:
         """
@@ -1476,3 +2013,209 @@ class FunTriviaScraper(BaseScraper):
         except Exception as e:
             self.logger.error(f"Error extracting photo quiz questions: {e}")
             return [] 
+
+    async def _extract_audio_quiz_questions(self, page: Page) -> List[Dict[str, Any]]:
+        """Extract questions from Audio Quiz format with audio handling."""
+        try:
+            questions = await page.evaluate("""
+                () => {
+                    const questions = [];
+                    
+                    // Look for question patterns in Audio Quiz format
+                    const questionElements = document.querySelectorAll('b, strong, .question');
+                    
+                    questionElements.forEach((qEl, index) => {
+                        const text = qEl.textContent.trim();
+                        
+                        // Check if this looks like a numbered question
+                        const questionMatch = text.match(/^(\\d+)\\.(.*)/);
+                        if (questionMatch) {
+                            const questionNumber = questionMatch[1];
+                            const questionText = questionMatch[2].trim();
+                            
+                            // Find associated audio elements near this question
+                            let associatedAudio = null;
+                            let current = qEl;
+                            
+                            // Look for audio elements in the vicinity of the question
+                            for (let i = 0; i < 10; i++) {
+                                if (current.nextElementSibling) {
+                                    current = current.nextElementSibling;
+                                    
+                                    // Check for direct audio elements
+                                    const audio = current.querySelector('audio') || 
+                                                 (current.tagName === 'AUDIO' ? current : null);
+                                    if (audio && audio.src) {
+                                        associatedAudio = audio.src;
+                                        break;
+                                    }
+                                    
+                                    // Check for embedded audio (Flash, etc.)
+                                    const embed = current.querySelector('embed[src*=".mp3"], embed[src*=".wav"]') ||
+                                                 (current.tagName === 'EMBED' && (current.src.includes('.mp3') || current.src.includes('.wav')) ? current : null);
+                                    if (embed && embed.src) {
+                                        associatedAudio = embed.src;
+                                        break;
+                                    }
+                                    
+                                    // Check for object elements with audio data
+                                    const object = current.querySelector('object[data*=".mp3"], object[data*=".wav"]') ||
+                                                  (current.tagName === 'OBJECT' && (current.data.includes('.mp3') || current.data.includes('.wav')) ? current : null);
+                                    if (object && object.data) {
+                                        associatedAudio = object.data;
+                                        break;
+                                    }
+                                    
+                                    // Check for links to audio files
+                                    const audioLink = current.querySelector('a[href*=".mp3"], a[href*=".wav"], a[href*=".ogg"]');
+                                    if (audioLink && audioLink.href) {
+                                        associatedAudio = audioLink.href;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Find radio buttons for this question
+                            const radioInputs = document.querySelectorAll(`input[name="q${questionNumber}"]`);
+                            const options = Array.from(radioInputs).map(radio => radio.value).filter(v => v);
+                            
+                            if (questionText && options.length >= 2) {
+                                questions.push({
+                                    question: questionText,
+                                    options: options,
+                                    questionNumber: questionNumber,
+                                    audioUrl: associatedAudio,
+                                    isAudioQuestion: true,
+                                    isAudioQuiz: true
+                                });
+                            }
+                        }
+                    });
+                    
+                    return questions;
+                }
+            """)
+            
+            # Store audio information for later download with proper localization key
+            # Final media files are downloaded in _process_extracted_questions with correct keys
+            for question in questions:
+                if question.get('audioUrl'):
+                    self.logger.info(f"Found audio for question {question['questionNumber']}: {question['audioUrl']}")
+            
+            self.logger.info(f"Extracted {len(questions)} audio quiz questions")
+            return questions
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting audio quiz questions: {e}")
+            return []
+
+    async def _extract_questions_robust(self, page: Page) -> List[Dict[str, Any]]:
+        """Extract questions from standard quiz formats with robust parsing."""
+        try:
+            questions = await page.evaluate("""
+                () => {
+                    const questions = [];
+                    
+                    // Strategy 1: Look for numbered questions
+                    const questionElements = document.querySelectorAll('b, strong, .question, h3, h4');
+                    
+                    questionElements.forEach((qEl, index) => {
+                        const text = qEl.textContent.trim();
+                        
+                        // Check if this looks like a numbered question
+                        const questionMatch = text.match(/^(\\d+)\\.(.*)/);
+                        if (questionMatch) {
+                            const questionNumber = questionMatch[1];
+                            const questionText = questionMatch[2].trim();
+                            
+                            // Find radio buttons for this question
+                            const radioInputs = document.querySelectorAll(`input[name="q${questionNumber}"]`);
+                            const options = Array.from(radioInputs).map(radio => radio.value).filter(v => v);
+                            
+                            if (questionText && options.length >= 2) {
+                                questions.push({
+                                    question: questionText,
+                                    options: options,
+                                    questionNumber: questionNumber
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Strategy 2: If no numbered questions found, look for form-based structure
+                    if (questions.length === 0) {
+                        const allRadios = document.querySelectorAll('input[type="radio"]');
+                        const questionGroups = {};
+                        
+                        // Group radio buttons by name
+                        allRadios.forEach(radio => {
+                            const name = radio.name;
+                            if (name) {
+                                if (!questionGroups[name]) {
+                                    questionGroups[name] = [];
+                                }
+                                if (radio.value && radio.value.trim()) {
+                                    questionGroups[name].push(radio.value.trim());
+                                }
+                            }
+                        });
+                        
+                        // Create questions from grouped radio buttons
+                        Object.keys(questionGroups).forEach((name, index) => {
+                            const options = questionGroups[name];
+                            if (options.length >= 2) {
+                                // Try to find question text near the radio buttons
+                                const firstRadio = document.querySelector(`input[name="${name}"]`);
+                                let questionText = `Question ${index + 1}`;
+                                
+                                if (firstRadio) {
+                                    // Look for question text before the radio buttons
+                                    let current = firstRadio.parentElement;
+                                    for (let i = 0; i < 5 && current; i++) {
+                                        const textElements = current.querySelectorAll('b, strong, .question');
+                                        if (textElements.length > 0) {
+                                            const potentialQuestion = textElements[textElements.length - 1].textContent.trim();
+                                            if (potentialQuestion.length > 10 && potentialQuestion.includes('?')) {
+                                                questionText = potentialQuestion;
+                                                break;
+                                            }
+                                        }
+                                        current = current.previousElementSibling;
+                                    }
+                                }
+                                
+                                questions.push({
+                                    question: questionText,
+                                    options: options,
+                                    questionNumber: (index + 1).toString()
+                                });
+                            }
+                        });
+                    }
+                    
+                    return questions;
+                }
+            """)
+            
+            self.logger.info(f"Extracted {len(questions)} questions using robust extraction")
+            return questions
+            
+        except Exception as e:
+            self.logger.error(f"Error in robust question extraction: {e}")
+            return []
+
+    async def _extract_hint_from_block(self, result_block) -> Optional[str]:
+        """
+        Legacy method for extracting hint/explanation from a result block.
+        
+        This method is maintained for backward compatibility but now delegates
+        to the more comprehensive _extract_explanation_from_block method.
+        """
+        try:
+            # Use the enhanced explanation extraction method
+            explanation = await self._extract_explanation_from_block(result_block, "unknown")
+            return explanation
+            
+        except Exception as e:
+            self.logger.debug(f"Error extracting hint: {e}")
+            return None

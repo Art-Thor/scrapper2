@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Minimal script to scrape just a few questions and save them immediately.
+Script to scrape questions with production settings.
 """
 
 import asyncio
@@ -9,6 +9,7 @@ import json
 import pandas as pd # type: ignore
 from pathlib import Path
 import os
+import random
 
 # Add the parent directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,13 +17,22 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.scraper.funtrivia import FunTriviaScraper
 from src.utils.csv_handler import CSVHandler
 
-async def quick_scrape():
-    """Scrape 3 questions and save immediately."""
-    print("🔄 Quick scraping 3 questions...")
+async def quick_scrape(max_questions=100):
+    """Scrape questions with production settings."""
+    print(f"🔄 Scraping {max_questions} questions with production settings...")
     
     # Load config
     with open('config/settings.json', 'r') as f:
         config = json.load(f)
+    
+    # Update config with production settings
+    config['scraping'] = {
+        'concurrency': 2,
+        'min_delay': 3,
+        'max_delay': 8,
+        'max_retries': 3,
+        'timeout': 30
+    }
     
     scraper = FunTriviaScraper('config/settings.json')
     csv_handler = CSVHandler(config['storage']['output_dir'])
@@ -30,20 +40,30 @@ async def quick_scrape():
     try:
         await scraper.initialize()
         
-        # Get just one quiz worth of questions
+        questions_collected = 0
         categories = await scraper._get_categories()
-        if categories:
-            category_url = categories[0]  # Just first category
+        
+        if not categories:
+            print("❌ No categories found")
+            return
+            
+        while questions_collected < max_questions and categories:
+            # Randomly select a category to distribute the load
+            category_url = random.choice(categories)
             quiz_links = await scraper._get_quiz_links(category_url)
+            
             if quiz_links:
-                quiz_url = quiz_links[0]  # Just first quiz
+                # Randomly select a quiz
+                quiz_url = random.choice(quiz_links)
                 questions = await scraper._scrape_quiz(quiz_url)
                 
                 if questions:
-                    # Take only first 3 questions
-                    questions = questions[:3]
+                    # Take only what we need
+                    remaining = max_questions - questions_collected
+                    questions = questions[:remaining]
+                    questions_collected += len(questions)
                     
-                    print(f"✅ Scraped {len(questions)} questions")
+                    print(f"✅ Scraped {len(questions)} questions from {quiz_url}")
                     
                     # Format for CSV
                     formatted_questions = []
@@ -67,17 +87,14 @@ async def quick_scrape():
 
                         # Add question type-specific fields
                         if question_type == 'multiple_choice':
-                            # Multiple choice has 4 options and ImagePath
                             formatted.update({
                                 'Option3': '',
                                 'Option4': '',
                                 'ImagePath': q.get('media_path', '')
                             })
                         elif question_type == 'true_false':
-                            # True/false only has 2 options, no media path
                             pass  # Already has Option1, Option2
                         elif question_type == 'sound':
-                            # Sound has 4 options and AudioPath
                             formatted.update({
                                 'Option3': '',
                                 'Option4': '',
@@ -112,18 +129,16 @@ async def quick_scrape():
                             total_saved += count
                             print(f"💾 Saved {count} {q_type} questions to output/{csv_file}")
                     
-                    print(f"💾 Total saved: {total_saved} questions")
+                    print(f"💾 Progress: {questions_collected}/{max_questions} questions collected")
                     
-                    # Show first question as example
-                    if formatted_questions:
-                        q = formatted_questions[0]
-                        print(f"\n📋 Sample question:")
-                        print(f"   ID: {q['Key']}")
-                        print(f"   Question: {q['Question'][:80]}...")
-                        print(f"   Options: {q['Option1']}, {q['Option2']}")
-                        print(f"   Answer: {q['CorrectAnswer']}")
-                else:
-                    print("❌ No questions found")
+                    # Add delay between quizzes
+                    await asyncio.sleep(random.uniform(config['scraping']['min_delay'], 
+                                                     config['scraping']['max_delay']))
+                    
+            if questions_collected >= max_questions:
+                break
+                
+        print(f"\n✨ Scraping completed! Total questions collected: {questions_collected}")
         
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -131,4 +146,4 @@ async def quick_scrape():
         await scraper.close()
 
 if __name__ == '__main__':
-    asyncio.run(quick_scrape()) 
+    asyncio.run(quick_scrape(100)) 
