@@ -89,16 +89,16 @@ CSV_COLUMNS = {
     'multiple_choice': [
         'Key', 'Domain', 'Topic', 'Difficulty', 'Question',
         'Option1', 'Option2', 'Option3', 'Option4', 
-        'CorrectAnswer', 'Hint', 'Description', 'ImagePath'
+        'CorrectAnswer', 'Description', 'ImagePath', 'SourceURL'
     ],
     'true_false': [
         'Key', 'Domain', 'Topic', 'Difficulty', 'Question',
-        'Option1', 'Option2', 'CorrectAnswer', 'Hint', 'Description'
+        'Option1', 'Option2', 'CorrectAnswer', 'Description', 'SourceURL'
     ],
     'sound': [
         'Key', 'Domain', 'Topic', 'Difficulty', 'Question',
         'Option1', 'Option2', 'Option3', 'Option4',
-        'CorrectAnswer', 'Hint', 'Description', 'AudioPath'
+        'CorrectAnswer', 'Description', 'AudioPath', 'SourceURL'
     ]
 }
 

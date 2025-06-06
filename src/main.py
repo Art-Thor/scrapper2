@@ -90,8 +90,8 @@ def format_question_data_enhanced(question: Dict[str, Any]) -> Dict[str, Any]:
         'Option1': '',
         'Option2': '',
         'CorrectAnswer': question.get('correct_answer', ''),
-        'Hint': question.get('hint', ''),
-        'Description': question.get('description', '')
+        'Description': question.get('description', ''),
+        'SourceURL': question.get('source_url', '')
     }
 
     # Add question type-specific fields
@@ -146,23 +146,26 @@ def format_question_data_enhanced(question: Dict[str, Any]) -> Dict[str, Any]:
                     formatted['CorrectAnswer'] = option.strip()
                     break
             else:
+                # Enhanced debugging before defaulting to first option
+                logging.getLogger(__name__).warning(
+                    f"Could not match correct answer '{correct_answer}' with options {options}"
+                )
+                logging.getLogger(__name__).warning(
+                    f"Question: {question.get('question', 'Unknown')[:100]}..."
+                )
+                
                 # If still no match and we have options, default to first option
                 if options:
                     formatted['CorrectAnswer'] = options[0].strip()
                     logging.getLogger(__name__).warning(
-                        f"Could not match correct answer '{correct_answer}' with options, using first option"
+                        f"Using first option as fallback: '{options[0].strip()}'"
                     )
 
     # Ensure we have a correct answer
     if not formatted['CorrectAnswer'] and options:
         formatted['CorrectAnswer'] = options[0].strip()
 
-    # Clean up hint text
-    if formatted['Hint']:
-        hint = formatted['Hint'].strip()
-        # Remove common prefixes and suffixes
-        hint = hint.replace('Explanation:', '').replace('Hint:', '').strip()
-        formatted['Hint'] = hint
+    # Note: Hint field has been removed - using Description only
 
     # Clean up description text
     if formatted['Description']:
@@ -321,7 +324,51 @@ async def main():
     parser.add_argument('--sheets-test-only', action='store_true',
                        help='Only test Google Sheets connection and exit (requires --sheets-credentials and --sheets-id)')
     
+    # Speed optimization arguments
+    parser.add_argument('--speed-profile', choices=['conservative', 'normal', 'fast', 'aggressive', 'turbo'], 
+                       default='normal',
+                       help='Speed profile: conservative (slow/safe), normal (default), fast, aggressive, turbo (fastest/risky)')
+    parser.add_argument('--list-speed-profiles', action='store_true',
+                       help='List available speed profiles and their descriptions')
+    
     args = parser.parse_args()
+
+    # Handle speed profile listing
+    if args.list_speed_profiles:
+        try:
+            with open('config/speed_profiles.json', 'r') as f:
+                profiles = json.load(f)
+            
+            print("\n🚀 Available Speed Profiles:")
+            print("=" * 50)
+            
+            for name, config in profiles['speed_profiles'].items():
+                print(f"\n📊 {name.upper()}")
+                print(f"   Description: {config['description']}")
+                print(f"   Concurrency: {config['concurrency']} browsers")
+                print(f"   Delays: {config['delays']['min']}-{config['delays']['max']}s")
+                print(f"   Rate Limit: {config['rate_limit']['requests_per_minute']} req/min")
+                print(f"   Network Wait: {'Yes' if config.get('wait_for_networkidle', True) else 'No (faster)'}")
+                
+                # Performance estimate
+                if name == 'turbo':
+                    print(f"   ⚡ Performance: ~60-100 questions/hour (VERY FAST)")
+                elif name == 'aggressive':
+                    print(f"   ⚡ Performance: ~40-60 questions/hour (FAST)")
+                elif name == 'fast':
+                    print(f"   ⚡ Performance: ~25-40 questions/hour (GOOD)")
+                elif name == 'normal':
+                    print(f"   ⚡ Performance: ~15-25 questions/hour (SAFE)")
+                elif name == 'conservative':
+                    print(f"   ⚡ Performance: ~8-15 questions/hour (VERY SAFE)")
+            
+            print(f"\n💡 Usage: python src/main.py --speed-profile fast --max-questions 50")
+            print(f"💡 Recommendation: Start with 'fast', upgrade to 'aggressive' if no issues")
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error loading speed profiles: {e}")
+            return 1
 
     # Handle Google Sheets testing mode
     if args.sheets_test_only:
@@ -493,8 +540,8 @@ async def main():
     logger.info(f"Current indices: {indexer.get_all_indices()}")
     logger.info(f"Mode: {'Dry Run' if args.dry_run else 'Append' if not args.overwrite else 'Overwrite'}")
 
-    # Initialize scraper
-    scraper = FunTriviaScraper(args.config)
+    # Initialize scraper with speed profile
+    scraper = FunTriviaScraper(args.config, speed_profile=args.speed_profile)
     
     try:
         await scraper.initialize()
